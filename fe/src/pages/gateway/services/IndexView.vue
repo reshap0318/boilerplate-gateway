@@ -25,7 +25,7 @@ import {
 } from '@phosphor-icons/vue'
 
 const serviceStore = useGatewayServiceStore()
-const { hasAllPermissions } = usePermission()
+const { hasAllPermissions, hasAnyPermission } = usePermission()
 const formModalRef = ref<InstanceType<typeof FormModal> | null>(null)
 const healthChecking = ref<number | null>(null)
 
@@ -349,5 +349,5 @@ onMounted(() => {
     </template>
   </div>
 
-  <FormModal ref="formModalRef" />
+  <FormModal ref="formModalRef" v-if="hasAnyPermission(['service.create', 'service.edit'])" />
 </template>
