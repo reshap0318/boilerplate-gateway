@@ -40,7 +40,9 @@ async function handleSubmit() {
       await permissionStore.create()
     }
     close()
-  } catch {}
+  } catch {
+    // error already handled by axios interceptor
+  }
 }
 
 defineExpose({ show, close })

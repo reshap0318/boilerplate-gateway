@@ -1,5 +1,6 @@
 declare module 'axios' {
   interface AxiosRequestConfig {
+    _retry?: boolean
     cancelPreviousRequests?: boolean
     hideError?: boolean
     hideError400?: boolean
@@ -65,10 +66,19 @@ api.interceptors.request.use(
 
 // Response interceptor
 let isHandling401 = false
+let isRefreshing = false
+let failedQueue: { resolve: () => void; reject: (error: unknown) => void }[] = []
+
+const processQueue = (error: unknown) => {
+  failedQueue.forEach(({ resolve, reject }) => (error ? reject(error) : resolve()))
+  failedQueue = []
+}
+
+const AUTH_EXCLUDED_PATHS = ['/auth/refresh', '/auth/login', '/auth/logout']
 
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
     const config = error.config
     const shouldHideAll = config?.hideError === true
 
@@ -92,6 +102,40 @@ api.interceptors.response.use(
     const status = error.response.status
     const data = error.response.data
     const message = data?.message
+
+    // Try a token refresh once before giving up on a 401
+    if (
+      status === 401 &&
+      !config?._retry &&
+      !AUTH_EXCLUDED_PATHS.some((p) => config?.url?.includes(p))
+    ) {
+      const authStore = useAuthStore()
+
+      if (authStore.refreshToken) {
+        if (isRefreshing) {
+          return new Promise<void>((resolve, reject) => {
+            failedQueue.push({ resolve, reject })
+          }).then(() => {
+            config._retry = true
+            return api(config)
+          })
+        }
+
+        config._retry = true
+        isRefreshing = true
+        try {
+          const newToken = await authStore.refreshTokenFn()
+          processQueue(null)
+          config.headers.Authorization = `Bearer ${newToken}`
+          return api(config)
+        } catch (refreshError) {
+          processQueue(refreshError)
+          // fall through to the standard 401 handling below (session expired + logout)
+        } finally {
+          isRefreshing = false
+        }
+      }
+    }
 
     if (shouldHideAll) {
       return Promise.reject(error)

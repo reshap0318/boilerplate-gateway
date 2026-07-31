@@ -71,7 +71,9 @@ async function handleSubmit() {
       await roleStore.create()
     }
     close()
-  } catch {}
+  } catch {
+    // error already handled by axios interceptor
+  }
 }
 
 function togglePermission(id: number) {
