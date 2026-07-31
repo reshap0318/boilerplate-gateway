@@ -19,16 +19,23 @@ const formModalRef = ref<InstanceType<typeof FormModal> | null>(null)
 const refreshing = ref(false)
 const allServices = ref<IGatewayService[]>([])
 
-const columns: TTableColumn[] = [
-  { title: 'Service', data: 'service', sortable: false },
-  { title: 'Method', data: 'method', sortable: false },
-  { title: 'Path Pattern', data: 'path_pattern', sortable: false },
-  { title: 'Permissions', data: 'permissions', sortable: false },
-  { title: 'Match Mode', data: 'permission_match_mode', sortable: false },
-  { title: 'Rate Limit', data: 'rate_limit_per_minute', sortable: false },
-  { title: 'Status', data: 'is_active', sortable: false },
-  { title: 'Aksi', data: 'actions', sortable: false, class: 'text-right' },
-]
+const columns = computed<TTableColumn[]>(() => {
+  const cols: TTableColumn[] = [
+    { title: 'Service', data: 'service', sortable: false },
+    { title: 'Method', data: 'method', sortable: false },
+    { title: 'Path Pattern', data: 'path_pattern', sortable: false },
+    { title: 'Permissions', data: 'permissions', sortable: false },
+    { title: 'Match Mode', data: 'permission_match_mode', sortable: false },
+    { title: 'Rate Limit', data: 'rate_limit_per_minute', sortable: false },
+    { title: 'Status', data: 'is_active', sortable: false },
+  ]
+
+  if (hasAnyPermission(['route.edit', 'route.delete'])) {
+    cols.push({ title: 'Aksi', data: 'actions', sortable: false, class: 'text-right' })
+  }
+
+  return cols
+})
 
 const rows = computed(() => routeStore.indexData.items as unknown as Record<string, unknown>[])
 
@@ -232,5 +239,5 @@ onMounted(async () => {
     </div>
   </div>
 
-  <FormModal ref="formModalRef" />
+  <FormModal ref="formModalRef" v-if="hasAnyPermission(['route.create', 'route.edit'])" />
 </template>
