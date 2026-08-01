@@ -25,25 +25,32 @@ type UserUpdateRequest struct {
 	Roles    []uint `json:"roles" validate:"omitempty,dive,required"`
 }
 
+// UserUpdateStatusRequest is the payload for suspending/activating a user.
+type UserUpdateStatusRequest struct {
+	Status string `json:"status" validate:"required,oneof=active suspended"`
+}
+
 // UserDTO is the response shape for a user.
 type UserDTO struct {
-	ID        uint      `json:"id"`
-	Email     string    `json:"email"`
-	Name      string    `json:"name"`
-	Status    string    `json:"status"`
-	Roles     []RoleDTO `json:"roles"`
-	CreatedAt time.Time `json:"created_at"`
+	ID          uint       `json:"id"`
+	Email       string     `json:"email"`
+	Name        string     `json:"name"`
+	Status      string     `json:"status"`
+	LockedUntil *time.Time `json:"locked_until"`
+	Roles       []RoleDTO  `json:"roles"`
+	CreatedAt   time.Time  `json:"created_at"`
 }
 
 // ToUserDTO converts a User model to its response DTO.
 func ToUserDTO(u *models.User) UserDTO {
 	return UserDTO{
-		ID:        u.ID,
-		Email:     u.Email,
-		Name:      u.Name,
-		Status:    u.Status,
-		Roles:     ToRoleDTOList(u.Roles),
-		CreatedAt: u.CreatedAt,
+		ID:          u.ID,
+		Email:       u.Email,
+		Name:        u.Name,
+		Status:      u.Status,
+		LockedUntil: u.LockedUntil,
+		Roles:       ToRoleDTOList(u.Roles),
+		CreatedAt:   u.CreatedAt,
 	}
 }
 

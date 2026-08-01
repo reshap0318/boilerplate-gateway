@@ -6,9 +6,12 @@ export interface IGatewayAuditLog {
   entity_type: string
   entity_id: number
   action: string
-  actor_user_id: number
+  actor_id: number | null
   actor_name: string
-  changes: string
+  actor_email: string
+  // {"before": {...}, "after": {...}} — create sends after only, delete sends before only.
+  // Omitted by the backend entirely when empty (omitempty).
+  payloads?: Record<string, unknown>
   created_at: string
 }
 
@@ -18,7 +21,7 @@ export type IGatewayAuditLogPayload = Record<string, never>
 
 export const useGatewayAuditLogStore = defineStore('gatewayAuditLog', () => {
   const crud = useCrud<IGatewayAuditLog, IGatewayAuditLogPayload>({
-    endpoint: '/audit-logs',
+    endpoint: '/uam/audit-logs',
     entityName: 'audit log',
     initialForm: {} as IGatewayAuditLogPayload,
     formRules: {},

@@ -129,6 +129,69 @@ func (s *Services) AuthLogout(ctx context.Context, tokenString string) error {
 	return nil
 }
 
+// AuthForgotPassword forwards a password-reset request to serv-uam. Errors are logged but
+// swallowed into the same generic message serv-uam itself returns — this endpoint must never
+// reveal whether an email is registered (see serv-uam AuthRequestPasswordReset).
+func (s *Services) AuthForgotPassword(ctx context.Context, email string) (string, error) {
+	body, err := json.Marshal(map[string]string{"email": email})
+	if err != nil {
+		return "", err
+	}
+
+	url := helpers.UamBaseURL() + "/auth/forgot-password"
+	resp, err := helpers.HTTPCall(ctx, http.MethodPost, url, bytes.NewReader(body))
+	if err != nil {
+		return "", fmt.Errorf("uam: request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	var envelope struct {
+		Message string `json:"message"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&envelope); err != nil {
+		return "", fmt.Errorf("uam: decode response: %w", err)
+	}
+	if resp.StatusCode >= 300 {
+		return "", fmt.Errorf("uam: unexpected status %d", resp.StatusCode)
+	}
+
+	return envelope.Message, nil
+}
+
+// AuthResetPassword forwards a reset token + new password to serv-uam.
+func (s *Services) AuthResetPassword(ctx context.Context, token, newPassword string) (string, error) {
+	body, err := json.Marshal(map[string]string{"token": token, "new_password": newPassword})
+	if err != nil {
+		return "", err
+	}
+
+	url := helpers.UamBaseURL() + "/auth/reset-password"
+	resp, err := helpers.HTTPCall(ctx, http.MethodPost, url, bytes.NewReader(body))
+	if err != nil {
+		return "", fmt.Errorf("uam: request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	var envelope struct {
+		Message string `json:"message"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&envelope); err != nil {
+		return "", fmt.Errorf("uam: decode response: %w", err)
+	}
+	if resp.StatusCode == http.StatusUnauthorized {
+		msg := envelope.Message
+		if msg == "" {
+			msg = "Invalid or expired reset token"
+		}
+		return "", &helpers.CustomError{Status: http.StatusUnauthorized, Message: msg}
+	}
+	if resp.StatusCode >= 300 {
+		return "", fmt.Errorf("uam: unexpected status %d", resp.StatusCode)
+	}
+
+	return envelope.Message, nil
+}
+
 // storeSession writes the session:{userID}:{jti} presence marker for a newly issued token,
 // TTL'd to match its own expiry.
 func (s *Services) storeSession(userID uint, claims *helpers.JWTClaims) {

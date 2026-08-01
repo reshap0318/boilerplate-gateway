@@ -20,6 +20,7 @@ func RegisterAll(r *gin.Engine, h *handlers.Handlers) {
 	RegisterDirectRoutes(r, h)
 
 	// Protected routes (api-gateway identity headers via middleware.GatewayAuth)
+	RegisterProfileRoutes(protected, h)
 	RegisterUserRoutes(protected, h)
 	RegisterRoleRoutes(protected, h)
 	RegisterPermissionRoutes(protected, h)

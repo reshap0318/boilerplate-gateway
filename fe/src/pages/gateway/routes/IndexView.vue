@@ -170,10 +170,10 @@ onMounted(async () => {
           </span>
           <span
             v-for="perm in (item as unknown as IGatewayRoute).permissions"
-            :key="perm.id"
+            :key="perm"
             class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700"
           >
-            {{ perm.name }}
+            {{ perm }}
           </span>
         </div>
       </template>

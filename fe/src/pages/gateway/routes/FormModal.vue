@@ -46,7 +46,7 @@ const fullPathPreview = computed(() => {
 })
 
 const permissionOptions = computed(() =>
-  allPermissions.value.map((p) => ({ value: p.id, label: p.name })),
+  allPermissions.value.map((p) => ({ value: p.name, label: p.name })),
 )
 
 // FormInput's modelValue is typed as string — bridge to the numeric|null form field.
@@ -79,7 +79,7 @@ function show(data?: IGatewayRoute) {
     routeStore.form.method = data.method
     routeStore.form.path_pattern = data.path_pattern
     routeStore.form.permission_match_mode = data.permission_match_mode
-    routeStore.form.permissions = data.permissions?.map((p) => p.id) || []
+    routeStore.form.permissions = data.permissions || []
     routeStore.form.rate_limit_per_minute = data.rate_limit_per_minute
     routeStore.form.is_active = data.is_active
   } else {

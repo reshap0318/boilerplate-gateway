@@ -16,6 +16,7 @@ func RegisterUserRoutes(r *gin.RouterGroup, h *handlers.Handlers) {
 		users.GET("", h.UserGetAll)
 		users.GET("/:id", h.UserGetByID)
 		users.PUT("/:id", h.UserUpdate)
+		users.PUT("/:id/status", h.UserUpdateStatus)
 		users.POST("/:id/unlock", h.UserUnlock)
 		users.DELETE("/:id", h.UserDelete)
 	}

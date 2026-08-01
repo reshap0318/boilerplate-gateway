@@ -27,6 +27,7 @@ function isValidBaseUrl(value: string): boolean {
 function isValidBasePath(value: string): boolean {
   if (!value) return true
   if (value === '/' || !value.startsWith('/') || value.endsWith('/')) return false
+  if (value === '/api' || value.startsWith('/api/')) return false
   return value
     .slice(1)
     .split('/')
@@ -60,7 +61,7 @@ export interface IGatewayServicePayload {
 
 export const useGatewayServiceStore = defineStore('gatewayService', () => {
   const crud = useCrud<IGatewayService, IGatewayServicePayload>({
-    endpoint: '/services',
+    endpoint: '/api/services',
     entityName: 'service',
     initialForm: {
       name: '',
@@ -79,7 +80,7 @@ export const useGatewayServiceStore = defineStore('gatewayService', () => {
       base_path: {
         required,
         validBasePath: helpers.withMessage(
-          'Base path harus diawali /, tidak boleh diakhiri /, dan tidak boleh mengandung * atau :',
+          'Base path harus diawali /, tidak boleh diakhiri /, tidak boleh /api, dan tidak boleh mengandung * atau :',
           isValidBasePath,
         ),
       },
@@ -92,7 +93,7 @@ export const useGatewayServiceStore = defineStore('gatewayService', () => {
 
   async function fetchAllServices(): Promise<IGatewayService[]> {
     try {
-      const { data } = await get<IApiResponse<IGatewayService[]>>('/services')
+      const { data } = await get<IApiResponse<IGatewayService[]>>('/api/services')
       return data.data || []
     } catch (error: any) {
       console.error('Failed to fetch all services', error)
@@ -102,7 +103,7 @@ export const useGatewayServiceStore = defineStore('gatewayService', () => {
 
   async function healthCheck(id: number): Promise<void> {
     try {
-      await post<IApiResponse<IGatewayServiceHealth>>(`/services/${id}/health-check`, {})
+      await post<IApiResponse<IGatewayServiceHealth>>(`/api/services/${id}/health-check`, {})
       await crud.fetchAll()
     } catch (error: any) {
       console.error('Failed to run health check', error)

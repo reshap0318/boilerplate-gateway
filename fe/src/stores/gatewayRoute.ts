@@ -2,7 +2,6 @@ import { defineStore } from 'pinia'
 import { required, minValue, helpers } from '@vuelidate/validators'
 import { post, type IApiResponse } from '@/plugins/axios'
 import { useCrud } from '@/composables'
-import type { IPermission } from './permission'
 
 export interface IGatewayRouteServiceMini {
   id: number
@@ -18,7 +17,7 @@ export interface IGatewayRoute {
   method: string
   path_pattern: string
   permission_match_mode: 'any' | 'all'
-  permissions: IPermission[]
+  permissions: string[]
   rate_limit_per_minute: number | null
   is_active: boolean
   created_at: string
@@ -31,14 +30,14 @@ export interface IGatewayRoutePayload {
   method: string
   path_pattern: string
   permission_match_mode: 'any' | 'all'
-  permissions: number[]
+  permissions: string[]
   rate_limit_per_minute: number | null
   is_active: boolean
 }
 
 export const useGatewayRouteStore = defineStore('gatewayRoute', () => {
   const crud = useCrud<IGatewayRoute, IGatewayRoutePayload>({
-    endpoint: '/routes',
+    endpoint: '/api/routes',
     entityName: 'route',
     initialForm: {
       service: null,
@@ -68,7 +67,7 @@ export const useGatewayRouteStore = defineStore('gatewayRoute', () => {
 
   async function refreshCache(): Promise<void> {
     try {
-      await post<IApiResponse<{ refreshed_at: string }>>('/gateway/cache/refresh', {})
+      await post<IApiResponse<{ refreshed_at: string }>>('/api/gateway/cache/refresh', {})
     } catch (error: any) {
       console.error('Failed to refresh gateway cache', error)
       throw error

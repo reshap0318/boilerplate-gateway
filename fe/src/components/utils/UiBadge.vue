@@ -16,8 +16,9 @@ const props = withDefaults(defineProps<Props>(), {
 const colorClasses = computed(() => {
   const baseClasses = {
     primary: {
-      solid: 'bg-primary text-primary-foreground hover:bg-primary/80 focus:ring-primary',
-      outline: 'border border-primary text-primary hover:bg-primary/10 focus:ring-primary',
+      solid: 'bg-primary-600 text-white hover:bg-primary-600/80 focus:ring-primary-600',
+      outline:
+        'border border-primary-600 text-primary-600 hover:bg-primary-50 focus:ring-primary-600',
     },
     danger: {
       solid: 'bg-red-500 text-white hover:bg-red-500/80 focus:ring-red-500',
@@ -51,7 +52,7 @@ const sizeClasses = computed(
 <template>
   <div
     :class="[
-      'inline-flex items-center rounded-full font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
+      'inline-flex items-center justify-center rounded-full font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
       colorClasses,
       sizeClasses,
     ]"

@@ -20,7 +20,7 @@ export interface IRolePayload {
 
 export const useRoleStore = defineStore('role', () => {
   const crud = useCrud<IRole, IRolePayload>({
-    endpoint: '/roles',
+    endpoint: '/uam/roles',
     entityName: 'role',
     initialForm: { name: '', description: '', permissions: [] },
     formRules: {
@@ -31,7 +31,7 @@ export const useRoleStore = defineStore('role', () => {
 
   async function fetchAllRoles(): Promise<IRole[]> {
     try {
-      const { data } = await get<IApiResponse<IRole[]>>('/roles')
+      const { data } = await get<IApiResponse<IRole[]>>('/uam/roles')
       return data.data || []
     } catch (error: any) {
       console.error('Failed to fetch all roles', error)
@@ -41,7 +41,7 @@ export const useRoleStore = defineStore('role', () => {
 
   async function fetchRolePermissions(id: number): Promise<IPermission[]> {
     try {
-      const { data } = await get<IApiResponse<IPermission[]>>(`/roles/${id}/permissions`)
+      const { data } = await get<IApiResponse<IPermission[]>>(`/uam/roles/${id}/permissions`)
       return data.data || []
     } catch (error: any) {
       console.error('Failed to fetch role permissions', error)

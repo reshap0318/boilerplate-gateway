@@ -45,20 +45,17 @@ function actionBadgeColor(action: string): 'primary' | 'danger' | 'warning' {
 
 function formatDateTime(value: string): string {
   return new Date(value).toLocaleString('id-ID', {
-    day: 'numeric',
-    month: 'short',
+    day: '2-digit',
+    month: 'long',
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
   })
 }
 
-function formatChanges(changes: string): string {
-  try {
-    return JSON.stringify(JSON.parse(changes), null, 2)
-  } catch {
-    return changes
-  }
+function formatChanges(payloads: Record<string, unknown> | undefined): string {
+  if (!payloads) return '(tidak ada detail perubahan)'
+  return JSON.stringify(payloads, null, 2)
 }
 
 function fetchLogs(page?: number) {
@@ -127,11 +124,13 @@ onMounted(async () => {
       </template>
 
       <template #entity_type="{ item }">
-        <UiBadge color="info">{{ (item as unknown as IGatewayAuditLog).entity_type }}</UiBadge>
+        <UiBadge color="info" class="uppercase">{{
+          (item as unknown as IGatewayAuditLog).entity_type
+        }}</UiBadge>
       </template>
 
       <template #action="{ item }">
-        <UiBadge :color="actionBadgeColor((item as unknown as IGatewayAuditLog).action)">
+        <UiBadge :color="actionBadgeColor((item as unknown as IGatewayAuditLog).action)" class="uppercase">
           {{ (item as unknown as IGatewayAuditLog).action }}
         </UiBadge>
       </template>
@@ -144,7 +143,7 @@ onMounted(async () => {
 
       <template #expandedCol="{ value }">
         <pre class="text-xs bg-gray-50 border border-gray-200 rounded-md p-3 overflow-x-auto">{{
-          formatChanges((value as unknown as IGatewayAuditLog).changes)
+          formatChanges((value as unknown as IGatewayAuditLog).payloads)
         }}</pre>
       </template>
 

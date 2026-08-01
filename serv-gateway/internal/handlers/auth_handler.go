@@ -73,6 +73,67 @@ func (h *Handlers) AuthRefreshToken(c *gin.Context) {
 	helpers.OK(c, "Token refreshed successfully", response)
 }
 
+// AuthForgotPassword handles a password-reset request, forwarded to serv-uam.
+// @Summary Request password reset
+// @Description Generates a password reset token and emails it (never reveals if the email exists)
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body dtos.ForgotPasswordRequest true "Email"
+// @Success 200 {object} map[string]string
+// @Router /api/auth/forgot-password [post]
+func (h *Handlers) AuthForgotPassword(c *gin.Context) {
+	var req dtos.ForgotPasswordRequest
+
+	if err := c.BindJSON(&req); err != nil {
+		helpers.BadRequest(c, "Invalid JSON payload")
+		return
+	}
+
+	if err := h.Validate.Struct(req); err != nil {
+		helpers.ValidationResponse(c, h.getErrorsMap(err))
+		return
+	}
+
+	message, err := h.svcs.AuthForgotPassword(c.Request.Context(), req.Email)
+	if helpers.HandleError(c, err, "Failed to request password reset") {
+		return
+	}
+
+	helpers.OK(c, message, nil)
+}
+
+// AuthResetPassword handles a password reset via token, forwarded to serv-uam.
+// @Summary Reset password
+// @Description Validates a reset token and updates the user's password
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body dtos.ResetPasswordRequest true "Token + new password"
+// @Success 200 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Router /api/auth/reset-password [post]
+func (h *Handlers) AuthResetPassword(c *gin.Context) {
+	var req dtos.ResetPasswordRequest
+
+	if err := c.BindJSON(&req); err != nil {
+		helpers.BadRequest(c, "Invalid JSON payload")
+		return
+	}
+
+	if err := h.Validate.Struct(req); err != nil {
+		helpers.ValidationResponse(c, h.getErrorsMap(err))
+		return
+	}
+
+	message, err := h.svcs.AuthResetPassword(c.Request.Context(), req.Token, req.NewPassword)
+	if helpers.HandleError(c, err, "Failed to reset password") {
+		return
+	}
+
+	helpers.OK(c, message, nil)
+}
+
 // AuthLogout handles user logout.
 // @Summary User logout
 // @Description Blacklists the current token so it cannot be reused

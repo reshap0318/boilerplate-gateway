@@ -165,22 +165,6 @@ function getInitials(name: string): string {
                 Edit Profile
               </UiButton>
             </div>
-
-            <!-- Roles -->
-            <div
-              v-if="profileStore.profile.roles.length"
-              class="mt-4 pt-4 border-t border-gray-100"
-            >
-              <div class="flex flex-wrap gap-2">
-                <span
-                  v-for="role in profileStore.profile.roles"
-                  :key="role.id"
-                  class="inline-flex items-center rounded-full bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700 ring-1 ring-inset ring-blue-100"
-                >
-                  {{ role.name }}
-                </span>
-              </div>
-            </div>
           </div>
 
           <!-- Info Cards Grid -->
@@ -214,23 +198,6 @@ function getInitials(name: string): string {
                 </div>
                 <UiButton variant="secondary" size="sm" @click="openPasswordModal"> Ubah </UiButton>
               </div>
-            </div>
-          </div>
-
-          <!-- Permissions Card -->
-          <div
-            v-if="profileStore.profile.permissions.length"
-            class="bg-white rounded-xl shadow p-5"
-          >
-            <h3 class="text-sm font-semibold text-gray-900 mb-3">Permissions</h3>
-            <div class="flex flex-wrap gap-2">
-              <span
-                v-for="perm in profileStore.profile.permissions"
-                :key="perm.id"
-                class="inline-flex items-center rounded-md bg-gray-50 px-2.5 py-1.5 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-200"
-              >
-                {{ perm.name }}
-              </span>
             </div>
           </div>
         </div>

@@ -27,6 +27,17 @@ type RegisterRequest struct {
 	Name     string `json:"name" validate:"required,min=3"`
 }
 
+// ForgotPasswordRequest represents the email to generate a reset token for.
+type ForgotPasswordRequest struct {
+	Email string `json:"email" validate:"required,email"`
+}
+
+// ResetPasswordRequest represents the token + new password payload.
+type ResetPasswordRequest struct {
+	Token       string `json:"token" validate:"required"`
+	NewPassword string `json:"new_password" validate:"required,min=8"`
+}
+
 // RoleMiniDTO is a lightweight role reference, embedded in UserDTO.
 type RoleMiniDTO struct {
 	ID          uint    `json:"id"`

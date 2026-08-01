@@ -31,7 +31,7 @@ export interface IUserPayload {
 
 export const useUserStore = defineStore('user', () => {
   const crud = useCrud<IUser, IUserPayload>({
-    endpoint: '/users',
+    endpoint: '/uam/users',
     entityName: 'user',
     initialForm: {
       name: '',
@@ -90,7 +90,7 @@ export const useUserStore = defineStore('user', () => {
 
   async function fetchAllUsers(): Promise<IUser[]> {
     try {
-      const { data } = await get<IApiResponse<IUser[]>>('/users')
+      const { data } = await get<IApiResponse<IUser[]>>('/uam/users')
       return data.data || []
     } catch (error: any) {
       console.error('Failed to fetch all users', error)
@@ -102,7 +102,7 @@ export const useUserStore = defineStore('user', () => {
   // endpoints — not bundled into the main update() form submit.
   async function updateStatus(id: number, status: TUserStatus): Promise<IUser | null> {
     try {
-      const { data } = await put<IApiResponse<IUser>>(`/users/${id}/status`, { status })
+      const { data } = await put<IApiResponse<IUser>>(`/uam/users/${id}/status`, { status })
       return data.data
     } catch (error: any) {
       console.error('Failed to update user status', error)
@@ -112,7 +112,7 @@ export const useUserStore = defineStore('user', () => {
 
   async function unlock(id: number): Promise<IUser | null> {
     try {
-      const { data } = await post<IApiResponse<IUser>>(`/users/${id}/unlock`, {})
+      const { data } = await post<IApiResponse<IUser>>(`/uam/users/${id}/unlock`, {})
       return data.data
     } catch (error: any) {
       console.error('Failed to unlock user', error)

@@ -18,3 +18,16 @@ func (s *Services) invalidateAllAccess() {
 	}
 	_ = s.RedisClient.DeleteByPattern("access:*")
 }
+
+// revokeAllSessions deletes every session:{userID}:{jti} key for a user — every access and
+// refresh token they currently hold stops passing api-gateway's AuthValidateToken on its very
+// next use, regardless of expiry. Call on suspend: unlike invalidateUserAccess (which only
+// affects the next proxied permission check), this also cuts off already-authenticated
+// Management API requests. Requires both services to share the same Redis (see
+// invalidateUserAccess).
+func (s *Services) revokeAllSessions(userID uint) {
+	if s.RedisClient == nil || !s.RedisClient.IsCacheAvailable() {
+		return
+	}
+	_ = s.RedisClient.DeleteByPattern(fmt.Sprintf("session:%d:*", userID))
+}

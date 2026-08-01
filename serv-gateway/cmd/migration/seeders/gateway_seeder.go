@@ -62,10 +62,16 @@ func SeedUamRoutes(db *gorm.DB, serviceID uint) {
 	// path_pattern is relative to the Service's base_path ("/uam", see SeedUamService), so
 	// these resolve to e.g. "/uam/users", "/uam/users/:id".
 	routes := []routeSeed{
+		// "My own profile" — no specific permission, just needs to be authenticated (empty
+		// Permissions, Public: false), same pattern as serv-message's notification routes.
+		{"GET", "/me", "any", nil, false},
+		{"PUT", "/me", "any", nil, false},
+
 		{"POST", "/users", "any", []string{"user.create"}, false},
 		{"GET", "/users", "any", []string{"user.index"}, false},
 		{"GET", "/users/:id", "any", []string{"user.index"}, false},
 		{"PUT", "/users/:id", "any", []string{"user.edit"}, false},
+		{"PUT", "/users/:id/status", "any", []string{"user.edit"}, false},
 		{"POST", "/users/:id/unlock", "any", []string{"user.edit"}, false},
 		{"DELETE", "/users/:id", "any", []string{"user.delete"}, false},
 
@@ -84,10 +90,9 @@ func SeedUamRoutes(db *gorm.DB, serviceID uint) {
 
 		{"GET", "/audit-logs", "any", []string{"audit.index"}, false},
 
-		// Public — no auth exists yet at forgot-password time, and the confirm step proves
-		// identity via the reset token itself, not a session.
-		{"POST", "/auth/password-reset/request", "any", nil, true},
-		{"POST", "/auth/password-reset/confirm", "any", nil, true},
+		// Forgot/reset-password are NOT proxied here — api-gateway forwards them to serv-uam
+		// server-to-server as fixed Management API routes (see
+		// serv-gateway/internal/services/auth_service.go), same as login/refresh.
 	}
 
 	count := 0

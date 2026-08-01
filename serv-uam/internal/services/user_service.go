@@ -190,6 +190,39 @@ func (s *Services) UserUnlock(ctx context.Context, id uint) (*dtos.UserDTO, erro
 	return &dto, nil
 }
 
+// UserUpdateStatus suspends or reactivates a user. On suspend, every session the user
+// currently holds is revoked immediately (see revokeAllSessions) — otherwise an
+// already-issued access/refresh token would keep working, permissions and all, until it
+// naturally expires.
+func (s *Services) UserUpdateStatus(ctx context.Context, id uint, status string) (*dtos.UserDTO, error) {
+	s.Logger.LogCtx(ctx, "UserUpdateStatus", "Setting user %d status to %s", id, status)
+
+	if _, err := s.repo.User.FindByID(nil, id); err != nil {
+		return nil, err
+	}
+
+	if _, err := s.repo.User.UpdateMap(nil, &models.User{ID: id}, map[string]interface{}{
+		"status": status,
+	}); err != nil {
+		s.Logger.LogCtx(ctx, "UserUpdateStatus", "Failed: %v", err)
+		return nil, err
+	}
+
+	result, err := s.repo.User.FindByID(nil, id, "Roles.Permissions")
+	if err != nil {
+		return nil, err
+	}
+
+	s.invalidateUserAccess(id)
+	if status == "suspended" {
+		s.revokeAllSessions(id)
+	}
+
+	s.Logger.LogCtx(ctx, "UserUpdateStatus", "User %d status set to %s", id, status)
+	dto := dtos.ToUserDTO(result)
+	return &dto, nil
+}
+
 // UserDelete deletes a user.
 func (s *Services) UserDelete(ctx context.Context, id uint) error {
 	s.Logger.LogCtx(ctx, "UserDelete", "Deleting user %d", id)

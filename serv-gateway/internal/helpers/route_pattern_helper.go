@@ -37,6 +37,11 @@ func ValidateBasePath(basePath string) error {
 	if strings.HasSuffix(basePath, "/") {
 		return &FieldError{Field: "base_path", Message: "Base path tidak boleh diakhiri dengan /"}
 	}
+	// "/api" is reserved for the Management API (see cmd/api/main.go) — a Service base_path
+	// starting with it would collide with that namespace in the Dynamic Proxy Engine.
+	if basePath == "/api" || strings.HasPrefix(basePath, "/api/") {
+		return &FieldError{Field: "base_path", Message: "Base path tidak boleh diawali dengan /api (reserved untuk Management API)"}
+	}
 
 	for _, part := range strings.Split(strings.TrimPrefix(basePath, "/"), "/") {
 		if part == "" {

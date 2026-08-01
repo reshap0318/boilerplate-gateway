@@ -59,7 +59,7 @@ export const useAuthStore = defineStore('auth', () => {
     isLoading.value = true
     try {
       const response = await post<IApiResponse<ILoginResponse>>(
-        '/auth/login',
+        '/api/auth/login',
         { email: form.email, password: form.password },
         { hideError: true },
       )
@@ -81,7 +81,7 @@ export const useAuthStore = defineStore('auth', () => {
     if (!refreshToken.value) throw new Error('No refresh token available')
 
     const response = await post<IApiResponse<IRefreshTokenResponse>>(
-      '/auth/refresh',
+      '/api/auth/refresh',
       { refresh_token: refreshToken.value },
       { hideError401: true },
     )
@@ -99,7 +99,7 @@ export const useAuthStore = defineStore('auth', () => {
   async function logout(): Promise<void> {
     try {
       if (token.value) {
-        await post('/auth/logout')
+        await post('/api/auth/logout')
       }
     } catch (error) {
       console.error('Logout error', error)
@@ -112,11 +112,11 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function forgotPassword(email: string): Promise<void> {
-    await post('/auth/forgot-password', { email })
+    await post('/api/auth/forgot-password', { email })
   }
 
   async function resetPassword(token: string, new_password: string): Promise<void> {
-    await post('/auth/reset-password', { token, new_password })
+    await post('/api/auth/reset-password', { token, new_password })
   }
 
   return {

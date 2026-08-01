@@ -12,7 +12,7 @@ import (
 func RegisterDirectRoutes(r *gin.Engine, h *handlers.Handlers) {
 	r.POST("/auth/verify", h.AuthVerify)
 	r.GET("/users/:id/access", h.UserGetAccess)
-	r.POST("/auth/password-reset/request", h.RequestPasswordReset)
-	r.POST("/auth/password-reset/confirm", h.ResetPassword)
+	r.POST("/auth/forgot-password", h.RequestPasswordReset)
+	r.POST("/auth/reset-password", h.ResetPassword)
 	r.POST("/audit-logs", h.AuditLogCreate)
 }

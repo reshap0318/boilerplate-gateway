@@ -9,7 +9,7 @@ export async function uploadFile(file: File): Promise<IUploadedFile> {
   const formData = new FormData()
   formData.append('file', file)
 
-  const response = await post<IApiResponse<IUploadedFile>>('/upload', formData, {
+  const response = await post<IApiResponse<IUploadedFile>>('/api/upload', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   })
 

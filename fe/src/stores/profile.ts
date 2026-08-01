@@ -58,7 +58,7 @@ export const useProfileStore = defineStore('profile', () => {
   async function fetchProfile() {
     loading.value.Fetch = true
     try {
-      const { data } = await get<IApiResponse<IProfile>>('/me')
+      const { data } = await get<IApiResponse<IProfile>>('/uam/me')
       profile.value = data.data || null
       if (profile.value) {
         form.name = profile.value.name
@@ -90,7 +90,7 @@ export const useProfileStore = defineStore('profile', () => {
         payload.password_confirmation = form.password_confirmation
       }
 
-      const { data } = await put<IApiResponse<IProfile>>('/me', payload)
+      const { data } = await put<IApiResponse<IProfile>>('/uam/me', payload)
       profile.value = data.data || null
 
       const authStore = useAuthStore()
