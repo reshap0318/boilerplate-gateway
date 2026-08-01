@@ -17,7 +17,6 @@ import (
 	"github.com/reshap0318/serv-gateway/internal/database"
 	"github.com/reshap0318/serv-gateway/internal/handlers"
 	"github.com/reshap0318/serv-gateway/internal/helpers"
-	clientEmail "github.com/reshap0318/serv-gateway/internal/pkg/email"
 	"github.com/reshap0318/serv-gateway/internal/proxy"
 	"github.com/reshap0318/serv-gateway/internal/repositories"
 	"github.com/reshap0318/serv-gateway/internal/services"
@@ -28,7 +27,6 @@ type Container struct {
 	DB           *gorm.DB
 	Redis        *database.RedisCache
 	Access       *helpers.Access
-	EmailClient  *clientEmail.EmailClient
 	Logger       *helpers.Logger
 	RateLimiter  *helpers.RateLimiter
 	Repositories *repositories.Repositories
@@ -129,9 +127,6 @@ func NewContainer() (*Container, error) {
 		container.Redis = database.NewRedisCache(redisClient)
 	}
 
-	// Initialize Email Client (optional)
-	container.EmailClient = clientEmail.NewEmailClient()
-
 	// Initialize Rate Limiter
 	rateLimitRequests := helpers.GetEnvInt("RATE_LIMIT_REQUESTS", 100)
 	rateLimitWindow := helpers.GetEnvInt("RATE_LIMIT_WINDOW", 60)
@@ -154,7 +149,6 @@ func NewContainer() (*Container, error) {
 	container.Services = services.NewServices(&services.ServicesConfig{
 		Repo:   container.Repositories,
 		Redis:  container.Redis,
-		Email:  container.EmailClient,
 		Logger: container.Logger,
 	})
 
