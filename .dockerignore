@@ -1,0 +1,23 @@
+# ── Backend ───────────────────────────────────────────────────────
+be/tmp
+be/storage
+be/.env
+be/.env.local
+be/*.exe
+be/*.test
+be/*.out
+
+# ── Frontend ─────────────────────────────────────────────────────
+fe/node_modules
+fe/dist
+fe/.env
+fe/.env.local
+fe/*.tsbuildinfo
+
+# ── Misc ──────────────────────────────────────────────────────────
+.git
+.claude
+docs
+*.md
+docker-compose*
+.env

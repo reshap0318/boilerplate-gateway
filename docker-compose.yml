@@ -1,0 +1,98 @@
+# ═══════════════════════════════════════════════════════════════
+#  api-gateway — Production Compose
+#  Usage: docker compose up -d --build
+#  All env variables come from the root .env file.
+# ═══════════════════════════════════════════════════════════════
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: etc/Dockerfile.be
+    image: api-gateway-be:latest
+    container_name: api-gateway-be
+    restart: unless-stopped
+    tty: true
+    env_file:
+      - .env
+    volumes:
+      - ./be/storage:/app/storage
+      - ./.env:/app/.env:ro
+    expose:
+      - "8080"
+    networks:
+      - api-gateway-net
+      - mysql-network
+      - redis-network
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  worker:
+    image: api-gateway-be:latest
+    container_name: api-gateway-worker
+    restart: unless-stopped
+    command: ["/worker"]
+    env_file:
+      - .env
+    volumes:
+      - ./be/storage:/app/storage
+      - ./.env:/app/.env:ro
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - api-gateway-net
+      - mysql-network
+      - redis-network
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  frontend:
+    build:
+      context: .
+      dockerfile: etc/Dockerfile.fe
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api}
+        VITE_APP_NAME: ${VITE_APP_NAME:-ApiGateway}
+    image: api-gateway-fe:latest
+    container_name: api-gateway-fe
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "9011:9011"
+    networks:
+      - api-gateway-net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9011"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  api-gateway-net:
+    driver: bridge
+    name: api-gateway-net
+  mysql-network:
+    external: true
+  redis-network:
+    external: true
