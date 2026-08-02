@@ -24,6 +24,7 @@ const columns = computed<TTableColumn[]>(() => {
     { title: 'Service', data: 'service', sortable: false },
     { title: 'Method', data: 'method', sortable: false },
     { title: 'Path Pattern', data: 'path_pattern', sortable: false },
+    { title: 'Akses', data: 'public', sortable: false },
     { title: 'Permissions', data: 'permissions', sortable: false },
     { title: 'Match Mode', data: 'permission_match_mode', sortable: false },
     { title: 'Rate Limit', data: 'rate_limit_per_minute', sortable: false },
@@ -160,13 +161,19 @@ onMounted(async () => {
         </code>
       </template>
 
+      <template #public="{ item }">
+        <UiBadge :color="(item as unknown as IGatewayRoute).public ? 'warning' : 'primary'">
+          {{ (item as unknown as IGatewayRoute).public ? 'Publik' : 'Private' }}
+        </UiBadge>
+      </template>
+
       <template #permissions="{ item }">
         <div class="flex flex-wrap gap-1">
           <span
             v-if="!(item as unknown as IGatewayRoute).permissions?.length"
             class="text-xs text-gray-400 italic"
           >
-            Publik
+            —
           </span>
           <span
             v-for="perm in (item as unknown as IGatewayRoute).permissions"

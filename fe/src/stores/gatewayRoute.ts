@@ -18,6 +18,7 @@ export interface IGatewayRoute {
   path_pattern: string
   permission_match_mode: 'any' | 'all'
   permissions: string[]
+  public: boolean
   rate_limit_per_minute: number | null
   is_active: boolean
   created_at: string
@@ -31,6 +32,7 @@ export interface IGatewayRoutePayload {
   path_pattern: string
   permission_match_mode: 'any' | 'all'
   permissions: string[]
+  public: boolean
   rate_limit_per_minute: number | null
   is_active: boolean
 }
@@ -45,6 +47,7 @@ export const useGatewayRouteStore = defineStore('gatewayRoute', () => {
       path_pattern: '',
       permission_match_mode: 'any',
       permissions: [],
+      public: false,
       rate_limit_per_minute: null,
       is_active: true,
     },

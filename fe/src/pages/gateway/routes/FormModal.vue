@@ -80,6 +80,7 @@ function show(data?: IGatewayRoute) {
     routeStore.form.path_pattern = data.path_pattern
     routeStore.form.permission_match_mode = data.permission_match_mode
     routeStore.form.permissions = data.permissions || []
+    routeStore.form.public = data.public
     routeStore.form.rate_limit_per_minute = data.rate_limit_per_minute
     routeStore.form.is_active = data.is_active
   } else {
@@ -171,7 +172,7 @@ defineExpose({ show, close })
         <FormSelect
           v-model="routeStore.form.permissions"
           name="permissions"
-          label="Permissions (kosong = publik)"
+          label="Permissions (opsional, hanya berlaku jika route tidak publik)"
           :options="permissionOptions"
           placeholder="Pilih permission..."
           mode="tags"
@@ -188,14 +189,25 @@ defineExpose({ show, close })
           :validation="v$.rate_limit_per_minute"
         />
 
-        <label class="flex items-center gap-2 cursor-pointer">
-          <input
-            v-model="routeStore.form.is_active"
-            type="checkbox"
-            class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-          />
-          <span class="text-sm font-medium text-gray-700">Aktif</span>
-        </label>
+        <div class="flex items-center gap-6">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input
+              v-model="routeStore.form.is_active"
+              type="checkbox"
+              class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <span class="text-sm font-medium text-gray-700">Aktif</span>
+          </label>
+
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input
+              v-model="routeStore.form.public"
+              type="checkbox"
+              class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <span class="text-sm font-medium text-gray-700">Publik (tidak butuh auth)</span>
+          </label>
+        </div>
       </div>
 
       <!-- Actions -->

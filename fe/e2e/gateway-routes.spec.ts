@@ -50,6 +50,33 @@ test('rejects a path_pattern not starting with /', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Tambah Route' })).toBeVisible()
 })
 
+test('defaults to private and can be toggled public', async ({ page }) => {
+  const pathPattern = `/e2e-route-${Date.now()}`
+
+  await page.getByRole('button', { name: 'Tambah Route' }).click()
+  await pickSingleSelect(page, 'Service', 'serv-uam')
+  await page.getByRole('textbox', { name: 'Path Pattern' }).fill(pathPattern)
+  await expect(page.getByRole('checkbox', { name: /Publik/ })).not.toBeChecked()
+  await page.getByRole('button', { name: 'Simpan' }).click()
+  await dismissSwal(page)
+  await goToLastPage(page)
+
+  const row = page.locator('tr', { hasText: pathPattern }).first()
+  await expect(row).toBeVisible()
+  await expect(row.getByText('Private', { exact: true })).toBeVisible()
+
+  await row.getByTitle('Edit').click()
+  await page.getByRole('checkbox', { name: /Publik/ }).check()
+  await page.getByRole('button', { name: 'Perbarui' }).click()
+  await dismissSwal(page)
+
+  await expect(row.getByText('Publik', { exact: true })).toBeVisible()
+
+  await row.getByTitle('Hapus').click()
+  await page.getByRole('button', { name: 'Yes' }).click()
+  await dismissSwal(page)
+})
+
 test('refresh cache button runs without error', async ({ page }) => {
   await page.getByRole('button', { name: 'Refresh Cache Now' }).click()
   await expect(page.getByText('Cache route berhasil di-refresh.')).toBeVisible()
