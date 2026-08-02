@@ -95,7 +95,7 @@ defineExpose({ show, close })
           v-model="serviceStore.form.base_path"
           name="base_path"
           label="Base Path"
-          placeholder="/order"
+          placeholder="/api/svc/order"
           :validation="v$.base_path"
         />
 

@@ -43,9 +43,8 @@ export const ApiMetadataDefaults: IApiMetadata = {
   total_pages: 1,
 }
 
-// Root of the gateway (no /api) — most calls proxy straight through to serv-uam/serv-message
-// (e.g. "/uam/users", "/message/notifications"); Management API calls add the "/api" prefix
-// themselves at the call site (e.g. "/api/services").
+// Root of the gateway — every call site (Management API or proxied service) includes its
+// own full path, e.g. "/api/services", "/api/svc/uam/users".
 const api: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080',
   timeout: 10000,

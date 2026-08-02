@@ -21,7 +21,7 @@ export type IGatewayAuditLogPayload = Record<string, never>
 
 export const useGatewayAuditLogStore = defineStore('gatewayAuditLog', () => {
   const crud = useCrud<IGatewayAuditLog, IGatewayAuditLogPayload>({
-    endpoint: '/uam/audit-logs',
+    endpoint: '/api/svc/uam/audit-logs',
     entityName: 'audit log',
     initialForm: {} as IGatewayAuditLogPayload,
     formRules: {},

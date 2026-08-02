@@ -102,6 +102,13 @@ func (s *Services) GatewayRouteGetAllPaginated(ctx context.Context, opts *reposi
 	}
 	opts.Preloads = []string{"Service"}
 
+	// IDs 1/2: forgot/reset-password bookkeeping rows (see gateway_seeder.go) — not live
+	// routes, hide them from the list.
+	opts.ConditionGroups = append(opts.ConditionGroups, repositories.ConditionGroup{
+		Logic:      "AND",
+		Conditions: []repositories.QueryCondition{{Column: "id", Operator: "NOT IN", Value: []uint{1, 2}}},
+	})
+
 	if serviceID != "" {
 		opts.ConditionGroups = append(opts.ConditionGroups, repositories.ConditionGroup{
 			Logic:      "AND",

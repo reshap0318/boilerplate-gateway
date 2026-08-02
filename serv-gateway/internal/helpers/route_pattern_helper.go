@@ -1,6 +1,9 @@
 package helpers
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 // ValidateRoutePathPattern enforces that a Gateway Route's path_pattern uses "*" only as the
 // trailing segment (e.g. "/files/*" is valid, "/files/*/meta" is not). proxy.matchSegments
@@ -25,9 +28,11 @@ func ValidateRoutePathPattern(pattern string) error {
 	return nil
 }
 
-// ValidateBasePath enforces base_path is a fixed literal prefix: starts with "/", no
-// trailing "/", no empty segments, no "*"/":" (that belongs on path_pattern instead).
-func ValidateBasePath(basePath string) error {
+// ValidateBasePath enforces base_path is a fixed literal prefix (starts with "/", no
+// trailing "/", no empty segments, no "*"/":") confined to a protocol-specific reserved
+// namespace ("/api/svc/" for http, "/ws/svc/" for websocket) — keeps it collision-free with
+// the Management API's own "/api/*" routes and lets nginx use just two fixed locations.
+func ValidateBasePath(basePath, protocol string) error {
 	if basePath == "" || basePath == "/" {
 		return &FieldError{Field: "base_path", Message: "Base path wajib diisi dan tidak boleh berupa \"/\""}
 	}
@@ -37,10 +42,13 @@ func ValidateBasePath(basePath string) error {
 	if strings.HasSuffix(basePath, "/") {
 		return &FieldError{Field: "base_path", Message: "Base path tidak boleh diakhiri dengan /"}
 	}
-	// "/api" is reserved for the Management API (see cmd/api/main.go) — a Service base_path
-	// starting with it would collide with that namespace in the Dynamic Proxy Engine.
-	if basePath == "/api" || strings.HasPrefix(basePath, "/api/") {
-		return &FieldError{Field: "base_path", Message: "Base path tidak boleh diawali dengan /api (reserved untuk Management API)"}
+
+	requiredPrefix := "/api/svc/"
+	if protocol == "websocket" {
+		requiredPrefix = "/ws/svc/"
+	}
+	if !strings.HasPrefix(basePath, requiredPrefix) {
+		return &FieldError{Field: "base_path", Message: fmt.Sprintf("Base path harus diawali dengan %s untuk protocol %s", requiredPrefix, protocol)}
 	}
 
 	for _, part := range strings.Split(strings.TrimPrefix(basePath, "/"), "/") {

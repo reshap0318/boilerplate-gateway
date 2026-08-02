@@ -29,7 +29,7 @@ func (s *Services) GatewayServiceCreate(ctx context.Context, req dtos.GatewaySer
 		return nil, err
 	}
 
-	if err := helpers.ValidateBasePath(req.BasePath); err != nil {
+	if err := helpers.ValidateBasePath(req.BasePath, req.Protocol); err != nil {
 		return nil, err
 	}
 
@@ -164,11 +164,15 @@ func (s *Services) GatewayServiceUpdate(ctx context.Context, id uint, req dtos.G
 		}
 	}
 
-	if req.BasePath != "" && req.BasePath != existing.BasePath {
-		if err := helpers.ValidateBasePath(req.BasePath); err != nil {
+	// Re-check pairing if either side changes — a protocol flip alone shouldn't leave
+	// base_path stuck in the old protocol's namespace.
+	if (req.BasePath != "" && req.BasePath != existing.BasePath) || req.Protocol != existing.Protocol {
+		if err := helpers.ValidateBasePath(req.BasePath, req.Protocol); err != nil {
 			return nil, err
 		}
+	}
 
+	if req.BasePath != "" && req.BasePath != existing.BasePath {
 		basePathExists, err := s.repo.GatewayService.ExistsWithMap(nil, map[string]interface{}{"base_path": req.BasePath})
 		if err != nil {
 			return nil, err

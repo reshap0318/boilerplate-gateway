@@ -17,7 +17,7 @@ export interface IPermissionPayload {
 
 export const usePermissionStore = defineStore('permission', () => {
   const crud = useCrud<IPermission, IPermissionPayload>({
-    endpoint: '/uam/permissions',
+    endpoint: '/api/svc/uam/permissions',
     entityName: 'permission',
     initialForm: { name: '', description: '' },
     formRules: {
@@ -28,7 +28,7 @@ export const usePermissionStore = defineStore('permission', () => {
 
   async function fetchAllPermissions(): Promise<IPermission[]> {
     try {
-      const { data } = await get<IApiResponse<IPermission[]>>('/uam/permissions')
+      const { data } = await get<IApiResponse<IPermission[]>>('/api/svc/uam/permissions')
       return data.data || []
     } catch (error: any) {
       console.error('Failed to fetch all permissions', error)

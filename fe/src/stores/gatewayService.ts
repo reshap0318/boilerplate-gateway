@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { watch } from 'vue'
 import { required, minLength, minValue, helpers } from '@vuelidate/validators'
 import { get, post, type IApiResponse } from '@/plugins/axios'
 import { useCrud } from '@/composables'
@@ -22,12 +23,16 @@ function isValidBaseUrl(value: string): boolean {
 }
 
 // Mirrors backend helpers.ValidateBasePath: must start with "/", must not end with "/",
-// no empty segments ("//"), and no "*"/":" segments (base_path is a fixed literal prefix,
-// not a route pattern).
-function isValidBasePath(value: string): boolean {
+// no empty segments ("//"), no "*"/":" segments, and confined to the reserved namespace
+// for the selected protocol ("/api/svc/" for http, "/ws/svc/" for websocket).
+function requiredBasePathPrefix(protocol: string): string {
+  return protocol === 'websocket' ? '/ws/svc/' : '/api/svc/'
+}
+
+function isValidBasePath(value: string, protocol: string): boolean {
   if (!value) return true
   if (value === '/' || !value.startsWith('/') || value.endsWith('/')) return false
-  if (value === '/api' || value.startsWith('/api/')) return false
+  if (!value.startsWith(requiredBasePathPrefix(protocol))) return false
   return value
     .slice(1)
     .split('/')
@@ -91,6 +96,36 @@ export const useGatewayServiceStore = defineStore('gatewayService', () => {
     },
   })
 
+  // Auto-swap the base_path prefix when protocol changes, so the field always points at the
+  // namespace reserved for the currently-selected protocol instead of relying on the admin
+  // to retype it correctly.
+  watch(
+    () => crud.form.protocol,
+    (newProtocol, oldProtocol) => {
+      if (newProtocol === oldProtocol) return
+      const newPrefix = requiredBasePathPrefix(newProtocol)
+      const oldPrefix = requiredBasePathPrefix(oldProtocol)
+      if (!crud.form.base_path) {
+        crud.form.base_path = newPrefix
+      } else if (crud.form.base_path.startsWith(oldPrefix)) {
+        crud.form.base_path = newPrefix + crud.form.base_path.slice(oldPrefix.length)
+      }
+    },
+  )
+
+  // Extended base_path rule — protocol-aware, so it must be defined after crud (references
+  // crud.form.protocol) and overrides the static one passed into useCrud above.
+  const formRules = {
+    ...crud.formRules,
+    base_path: {
+      required,
+      validBasePath: helpers.withMessage(
+        'Base path harus diawali /api/svc/ (protocol http) atau /ws/svc/ (protocol websocket), sesuai protocol yang dipilih',
+        (value: string) => isValidBasePath(value, crud.form.protocol),
+      ),
+    },
+  }
+
   async function fetchAllServices(): Promise<IGatewayService[]> {
     try {
       const { data } = await get<IApiResponse<IGatewayService[]>>('/api/services')
@@ -113,6 +148,7 @@ export const useGatewayServiceStore = defineStore('gatewayService', () => {
 
   return {
     ...crud,
+    formRules,
     fetchAllServices,
     healthCheck,
   }

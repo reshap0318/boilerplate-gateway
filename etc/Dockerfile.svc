@@ -1,0 +1,36 @@
+# ── serv-uam / serv-message (production) ─────────────────────────
+# Generic build for services with only server + migrate binaries.
+# Build with --build-arg SERVICE=serv-uam (or serv-message).
+# ──────────────────────────────────────────────────────────────────
+
+FROM golang:1.25-alpine AS builder
+
+ARG SERVICE
+
+RUN apk add --no-cache git gcc musl-dev
+
+WORKDIR /src
+
+COPY ${SERVICE}/go.mod ${SERVICE}/go.sum ./
+RUN go mod download
+
+COPY ${SERVICE}/ .
+
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -tags timetzdata -o /opt/server ./cmd/api
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -tags timetzdata -o /opt/migrate ./cmd/migration
+
+# ── Runtime ───────────────────────────────────────────────────────
+FROM alpine:3.21
+
+RUN apk add --no-cache ca-certificates tzdata
+
+COPY --from=builder /opt/server  /server
+COPY --from=builder /opt/migrate /migrate
+COPY etc/entrypoint-svc.sh        /entrypoint.sh
+
+RUN chmod +x /entrypoint.sh
+
+WORKDIR /app
+EXPOSE 8080
+
+ENTRYPOINT ["/entrypoint.sh"]

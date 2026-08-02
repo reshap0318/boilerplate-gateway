@@ -130,7 +130,10 @@ onMounted(async () => {
       </template>
 
       <template #action="{ item }">
-        <UiBadge :color="actionBadgeColor((item as unknown as IGatewayAuditLog).action)" class="uppercase">
+        <UiBadge
+          :color="actionBadgeColor((item as unknown as IGatewayAuditLog).action)"
+          class="uppercase"
+        >
           {{ (item as unknown as IGatewayAuditLog).action }}
         </UiBadge>
       </template>

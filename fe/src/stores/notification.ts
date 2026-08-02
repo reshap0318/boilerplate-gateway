@@ -60,7 +60,7 @@ export const useNotificationStore = defineStore('notification', () => {
         params.type = filters.type
       }
 
-      const { data } = await get<IApiResponse<INotification[]>>('/message/notifications', {
+      const { data } = await get<IApiResponse<INotification[]>>('/api/svc/message/notifications', {
         params,
       })
       notifications.value = data.data || []
@@ -94,7 +94,7 @@ export const useNotificationStore = defineStore('notification', () => {
         params.type = filters.type
       }
 
-      const { data } = await get<IApiResponse<INotification[]>>('/message/notifications', {
+      const { data } = await get<IApiResponse<INotification[]>>('/api/svc/message/notifications', {
         params,
       })
       const newNotifications = data.data || []
@@ -112,7 +112,7 @@ export const useNotificationStore = defineStore('notification', () => {
     loading.value.UnreadCount = true
     try {
       const { data } = await get<IApiResponse<IUnreadCountResponse>>(
-        '/message/notifications/unread-count',
+        '/api/svc/message/notifications/unread-count',
       )
       unreadCount.value = data.data?.unread_count ?? 0
       return unreadCount.value
@@ -127,7 +127,7 @@ export const useNotificationStore = defineStore('notification', () => {
   async function markAsRead(id: number) {
     loading.value.MarkRead = true
     try {
-      await patch(`/message/notifications/${id}/read`)
+      await patch(`/api/svc/message/notifications/${id}/read`)
       // Update local state
       const notification = notifications.value.find((n) => n.id === id)
       if (notification && !notification.read_at) {
@@ -144,7 +144,7 @@ export const useNotificationStore = defineStore('notification', () => {
   async function markAllAsRead() {
     loading.value.MarkAllRead = true
     try {
-      await patch('/message/notifications/read-all')
+      await patch('/api/svc/message/notifications/read-all')
       // Update local state
       notifications.value.forEach((n) => {
         if (!n.read_at) {
@@ -162,7 +162,7 @@ export const useNotificationStore = defineStore('notification', () => {
   async function deleteAllNotifications() {
     loading.value.Delete = true
     try {
-      await del('/message/notifications')
+      await del('/api/svc/message/notifications')
       const unreadBefore = notifications.value.filter((n) => n.read_at === null).length
       notifications.value = []
       unreadCount.value = Math.max(0, unreadCount.value - unreadBefore)
@@ -177,7 +177,7 @@ export const useNotificationStore = defineStore('notification', () => {
   async function deleteNotification(id: number) {
     loading.value.Delete = true
     try {
-      await del(`/message/notifications/${id}`)
+      await del(`/api/svc/message/notifications/${id}`)
       // Update local state
       const wasUnread = notifications.value.find((n) => n.id === id)?.read_at === null
       notifications.value = notifications.value.filter((n) => n.id !== id)

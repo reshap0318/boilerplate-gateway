@@ -1,0 +1,24 @@
+# ── Go services ────────────────────────────────────────────────────
+serv-gateway/storage
+serv-uam/storage
+serv-message/storage
+**/*.exe
+**/*.test
+**/*.out
+
+# ── Frontend ─────────────────────────────────────────────────────
+fe/node_modules
+fe/dist
+fe/.env
+fe/.env.local
+
+# ── Misc ──────────────────────────────────────────────────────────
+.git
+.claude
+.playwright-cli
+docs
+*.md
+.env
+.env.gateway
+.env.uam
+.env.message
