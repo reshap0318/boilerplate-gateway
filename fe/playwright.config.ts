@@ -10,7 +10,9 @@ export default defineConfig({
   // rows) and the gateway itself rate-limits /api/* — parallel workers both race each other's
   // data and trip that limiter with concurrent logins.
   workers: 1,
-  reporter: 'list',
+  // 'html' always writes the report to disk; open:'never' stops it from trying to launch a
+  // browser after every run — view it on demand via `yarn test:e2e:report`.
+  reporter: [['list'], ['html', { open: 'never' }]],
   use: {
     baseURL: process.env.E2E_BASE_URL || 'http://localhost:3000',
   },

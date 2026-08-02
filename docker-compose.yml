@@ -21,8 +21,6 @@ services:
       - .env.gateway
     volumes:
       - ./serv-gateway/storage:/app/storage
-    ports:
-      - "${GATEWAY_PORT:-8080}:8080"
     networks:
       - gateway-net
       - mysql-network
