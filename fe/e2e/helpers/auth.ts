@@ -2,7 +2,8 @@ import type { APIRequestContext, Page } from '@playwright/test'
 
 // Seeded accounts (serv-uam/cmd/migration/seeders/user_seeder.go, role_permission_seeder.go).
 export const SUPER_ADMIN = { email: 'suAdmin@app.com', password: '@dmin#123' } // all permissions
-export const ADMIN_GATEWAY = { email: 'admin@app.com', password: 'Admin#123' } // gateway-only permissions
+export const ADMIN_GATEWAY = { email: 'admin01@app.com', password: 'Admin#123' } // gateway-only permissions
+export const ADMIN_USER = { email: 'admin02@app.com', password: 'Admin#123' } // user CRUD + role list
 export const VIEWER = { email: 'viewer@app.com', password: 'Viewer#123' } // read-only
 
 interface Session {

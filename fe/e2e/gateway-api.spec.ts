@@ -25,7 +25,7 @@ test.describe('system', () => {
 test.describe('auth (static Management API)', () => {
   test('login with correct credentials returns a token', async ({ request }) => {
     const res = await request.post('/api/auth/login', {
-      data: { email: 'admin@app.com', password: 'Admin#123' },
+      data: { email: 'admin01@app.com', password: 'Admin#123' },
     })
     expect(res.status()).toBe(200)
     const body = await res.json()
@@ -35,14 +35,14 @@ test.describe('auth (static Management API)', () => {
 
   test('login with wrong password is rejected', async ({ request }) => {
     const res = await request.post('/api/auth/login', {
-      data: { email: 'admin@app.com', password: 'wrong' },
+      data: { email: 'admin01@app.com', password: 'wrong' },
     })
     expect(res.status()).toBe(422)
   })
 
   test('forgot-password (server-to-server forward) still works', async ({ request }) => {
     const res = await request.post('/api/auth/forgot-password', {
-      data: { email: 'admin@app.com' },
+      data: { email: 'admin01@app.com' },
     })
     expect(res.status()).toBe(200)
   })
@@ -51,7 +51,7 @@ test.describe('auth (static Management API)', () => {
 test.describe('management API: services & routes', () => {
   test.beforeAll(async ({ request }) => {
     const res = await request.post('/api/auth/login', {
-      data: { email: 'admin@app.com', password: 'Admin#123' },
+      data: { email: 'admin01@app.com', password: 'Admin#123' },
     })
     token = (await res.json()).data.token
   })
@@ -88,7 +88,7 @@ test.describe('management API: services & routes', () => {
 test.describe('dynamic proxy', () => {
   test.beforeAll(async ({ request }) => {
     const res = await request.post('/api/auth/login', {
-      data: { email: 'admin@app.com', password: 'Admin#123' },
+      data: { email: 'admin01@app.com', password: 'Admin#123' },
     })
     token = (await res.json()).data.token
   })

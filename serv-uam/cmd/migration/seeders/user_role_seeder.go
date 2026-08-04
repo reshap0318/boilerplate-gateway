@@ -14,7 +14,8 @@ func SeedUserRoles(db *gorm.DB, userEmails map[string]uint, roleIDs map[string]u
 
 	userRoles := map[string]string{
 		"suAdmin@app.com": "Super Admin",
-		"admin@app.com":   "Admin Gateway",
+		"admin01@app.com": "Admin Gateway",
+		"admin02@app.com": "Admin User",
 		"viewer@app.com":  "Viewer",
 	}
 

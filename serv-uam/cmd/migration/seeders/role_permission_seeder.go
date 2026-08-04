@@ -20,6 +20,10 @@ func SeedRolePermissions(db *gorm.DB, roleIDs map[string]uint, permIDs map[strin
 			"permission.index", "permission.create", "permission.edit", "permission.delete",
 			"role.index", "role.create", "role.edit", "role.delete",
 		},
+		"Admin User": {
+			"user.index", "user.create", "user.edit", "user.delete",
+			"role.index",
+		},
 		"Viewer": {
 			"route.index",
 			"service.index",
