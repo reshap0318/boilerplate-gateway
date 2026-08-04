@@ -10,9 +10,16 @@ type LoginRequest struct {
 
 // LoginResponse represents the login response payload.
 type LoginResponse struct {
-	Token        string  `json:"token"`
-	RefreshToken string  `json:"refresh_token"`
-	User         UserDTO `json:"user"`
+	TwoFARequired bool     `json:"twofa_required"`
+	Token         string   `json:"token,omitempty"`
+	RefreshToken  string   `json:"refresh_token,omitempty"`
+	User          *UserDTO `json:"user,omitempty"`
+}
+
+// TwoFAVerifyRequest is the email + code payload for completing a 2FA login.
+type TwoFAVerifyRequest struct {
+	Email string `json:"email" validate:"required,email"`
+	Code  string `json:"code" validate:"required,len=6,numeric"`
 }
 
 // RefreshTokenRequest represents the refresh token request payload.

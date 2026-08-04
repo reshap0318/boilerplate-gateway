@@ -13,6 +13,7 @@ func RegisterAuthRoutes(r *gin.RouterGroup, h *handlers.Handlers) {
 	auth := r.Group("/auth")
 	{
 		auth.POST("/login", h.AuthLogin)
+		auth.POST("/2fa/verify", h.TwoFAVerify)
 		auth.POST("/refresh", h.AuthRefreshToken)
 		auth.POST("/forgot-password", h.AuthForgotPassword)
 		auth.POST("/reset-password", h.AuthResetPassword)

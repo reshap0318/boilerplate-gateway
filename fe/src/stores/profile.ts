@@ -14,6 +14,7 @@ export interface IProfile {
   email: string
   name: string
   avatar: string | null
+  twofa: boolean
   created_at: string
   roles: IRole[]
   permissions: IPermission[]

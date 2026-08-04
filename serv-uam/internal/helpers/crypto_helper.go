@@ -4,6 +4,8 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
+	"math/big"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -29,6 +31,16 @@ func HashString(str string) (string, error) {
 // VerifyString verifies a string against its hash.
 func VerifyString(str, hash string) error {
 	return bcrypt.CompareHashAndPassword([]byte(hash), []byte(str))
+}
+
+// GenerateNumericOTP generates a random zero-padded numeric code of the given length.
+func GenerateNumericOTP(length int) (string, error) {
+	max := new(big.Int).Exp(big.NewInt(10), big.NewInt(int64(length)), nil)
+	n, err := rand.Int(rand.Reader, max)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%0*d", length, n), nil
 }
 
 // HashToken deterministically hashes a high-entropy token (e.g. a password-reset token) for

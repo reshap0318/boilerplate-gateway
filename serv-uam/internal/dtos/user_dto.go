@@ -37,6 +37,7 @@ type UserDTO struct {
 	Name        string     `json:"name"`
 	Status      string     `json:"status"`
 	LockedUntil *time.Time `json:"locked_until"`
+	TwoFA       bool       `json:"twofa"`
 	Roles       []RoleDTO  `json:"roles"`
 	CreatedAt   time.Time  `json:"created_at"`
 }
@@ -49,6 +50,7 @@ func ToUserDTO(u *models.User) UserDTO {
 		Name:        u.Name,
 		Status:      u.Status,
 		LockedUntil: u.LockedUntil,
+		TwoFA:       u.TwoFA,
 		Roles:       ToRoleDTOList(u.Roles),
 		CreatedAt:   u.CreatedAt,
 	}

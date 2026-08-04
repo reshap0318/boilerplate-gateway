@@ -77,6 +77,7 @@ func SeedUamRoutes(db *gorm.DB, serviceID uint) {
 		{"GET", "/users/:id", "any", []string{"user.index"}, false},
 		{"PUT", "/users/:id", "any", []string{"user.edit"}, false},
 		{"PUT", "/users/:id/status", "any", []string{"user.edit"}, false},
+		{"PUT", "/users/:id/2fa", "any", []string{"user.edit"}, false},
 		{"POST", "/users/:id/unlock", "any", []string{"user.edit"}, false},
 		{"DELETE", "/users/:id", "any", []string{"user.delete"}, false},
 

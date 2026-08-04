@@ -17,6 +17,12 @@ const routes: RouteRecordRaw[] = [
     meta: { guest: true },
   },
   {
+    path: '/2fa',
+    name: 'TwoFactor',
+    component: () => import('@/pages/auth/TwoFactorView.vue'),
+    meta: { guest: true },
+  },
+  {
     path: '/forgot-password',
     name: 'ForgotPassword',
     component: () => import('@/pages/auth/ForgotPasswordView.vue'),

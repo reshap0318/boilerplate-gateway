@@ -23,4 +23,10 @@ var Registry = map[string]TemplateDef{
 			return "Verifikasi Email Anda — " + appName, VerifyEmailContent(params["verify_url"], appName)
 		},
 	},
+	"twofa_code": {
+		RequiredParams: []string{"code"},
+		Render: func(params map[string]string, appName string) (string, string) {
+			return "Kode Verifikasi Login — " + appName, TwoFACodeContent(params["code"])
+		},
+	},
 }

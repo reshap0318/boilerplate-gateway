@@ -11,9 +11,10 @@ export interface ILoginPayload {
 }
 
 export interface ILoginResponse {
-  token: string
-  refresh_token: string
-  user: {
+  twofa_required: boolean
+  token?: string
+  refresh_token?: string
+  user?: {
     id: number
     name: string
     email: string
@@ -39,6 +40,8 @@ export const useAuthStore = defineStore('auth', () => {
   const user = ref<ILoginResponse['user'] | null>(storage.getItem<ILoginResponse['user']>('user'))
   const isLoading = ref(false)
   const isAuthenticated = computed((): boolean => !!token.value)
+  // Set by login() when the account has 2FA enabled — the email a pending /2fa/verify belongs to.
+  const pendingEmail = ref<string | null>(null)
 
   const form = reactive<ILoginPayload>({
     email: '',
@@ -55,7 +58,22 @@ export const useAuthStore = defineStore('auth', () => {
     },
   }
 
-  async function login(): Promise<void> {
+  // applySession stores a completed login's tokens — shared by login() and verifyTwoFA().
+  function applySession(result: ILoginResponse) {
+    if (!result.token || !result.refresh_token || !result.user) return
+
+    token.value = result.token
+    refreshToken.value = result.refresh_token
+    user.value = result.user
+
+    storage.setItem('token', result.token)
+    storage.setItem('refresh_token', result.refresh_token)
+    storage.setItem('user', result.user)
+  }
+
+  // login returns true when the account has 2FA enabled — the caller should route to /2fa
+  // instead of treating this as a completed login.
+  async function login(): Promise<boolean> {
     isLoading.value = true
     try {
       const response = await post<IApiResponse<ILoginResponse>>(
@@ -63,15 +81,32 @@ export const useAuthStore = defineStore('auth', () => {
         { email: form.email, password: form.password },
         { hideError: true },
       )
-      const { token: newToken, refresh_token: newRefreshToken, user: userData } = response.data.data
+      const result = response.data.data
 
-      token.value = newToken
-      refreshToken.value = newRefreshToken
-      user.value = userData
+      if (result.twofa_required) {
+        pendingEmail.value = form.email
+        return true
+      }
 
-      storage.setItem('token', newToken)
-      storage.setItem('refresh_token', newRefreshToken)
-      storage.setItem('user', userData)
+      applySession(result)
+      return false
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  async function verifyTwoFA(code: string): Promise<void> {
+    if (!pendingEmail.value) throw new Error('No pending 2FA login')
+
+    isLoading.value = true
+    try {
+      const response = await post<IApiResponse<ILoginResponse>>(
+        '/api/auth/2fa/verify',
+        { email: pendingEmail.value, code },
+        { hideError: true },
+      )
+      applySession(response.data.data)
+      pendingEmail.value = null
     } finally {
       isLoading.value = false
     }
@@ -124,9 +159,11 @@ export const useAuthStore = defineStore('auth', () => {
     refreshToken,
     user,
     isLoading,
+    pendingEmail,
     form,
     formRules,
     login,
+    verifyTwoFA,
     refreshTokenFn,
     logout,
     forgotPassword,

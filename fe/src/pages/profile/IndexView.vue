@@ -10,6 +10,7 @@ import {
   PhPencilSimple,
   PhLock,
   PhUploadSimple,
+  PhDeviceMobile,
 } from '@phosphor-icons/vue'
 import { useProfileStore } from '@/stores'
 
@@ -168,7 +169,7 @@ function getInitials(name: string): string {
           </div>
 
           <!-- Info Cards Grid -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
             <!-- Member Since -->
             <div class="bg-white rounded-xl shadow p-5">
               <div class="flex items-center gap-3">
@@ -197,6 +198,27 @@ function getInitials(name: string): string {
                   </div>
                 </div>
                 <UiButton variant="secondary" size="sm" @click="openPasswordModal"> Ubah </UiButton>
+              </div>
+            </div>
+
+            <!-- 2FA Status (admin-managed, read-only here) -->
+            <div class="bg-white rounded-xl shadow p-5">
+              <div class="flex items-center gap-3">
+                <div
+                  class="w-10 h-10 rounded-lg flex items-center justify-center"
+                  :class="profileStore.profile.twofa ? 'bg-emerald-50' : 'bg-gray-100'"
+                >
+                  <PhDeviceMobile
+                    class="w-5 h-5"
+                    :class="profileStore.profile.twofa ? 'text-emerald-500' : 'text-gray-400'"
+                  />
+                </div>
+                <div>
+                  <p class="text-xs text-gray-500 uppercase tracking-wide">Verifikasi 2 Langkah</p>
+                  <p class="text-sm font-semibold text-gray-900">
+                    {{ profileStore.profile.twofa ? 'Aktif' : 'Nonaktif' }}
+                  </p>
+                </div>
               </div>
             </div>
           </div>

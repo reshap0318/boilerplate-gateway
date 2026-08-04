@@ -130,6 +130,28 @@ func (h *Handlers) UserUpdateStatus(c *gin.Context) {
 	helpers.OK(c, "User status updated successfully", result)
 }
 
+// TwoFAToggle enables or disables a user's 2FA (admin action).
+func (h *Handlers) TwoFAToggle(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		helpers.BadRequest(c, "Invalid user ID")
+		return
+	}
+
+	var req dtos.UserUpdateTwoFARequest
+	if err := c.BindJSON(&req); err != nil {
+		helpers.BadRequest(c, "Invalid JSON payload")
+		return
+	}
+
+	result, err := h.svcs.TwoFAToggle(c.Request.Context(), uint(id), req.TwoFA)
+	if helpers.HandleError(c, err, "Failed to update two-factor setting") {
+		return
+	}
+
+	helpers.OK(c, "Two-factor setting updated successfully", result)
+}
+
 // UserUnlock manually clears a user's account lock.
 func (h *Handlers) UserUnlock(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)

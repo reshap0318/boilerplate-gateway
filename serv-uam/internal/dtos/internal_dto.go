@@ -6,15 +6,14 @@ type AuthVerifyRequest struct {
 	Password string `json:"password" validate:"required"`
 }
 
-// UserAccessDTO is the resolved identity/access api-gateway caches to answer
-// permission checks — returned by AuthVerify (login) and UserGetAccess
-// (cache-miss refill).
+// UserAccessDTO is the resolved identity/access api-gateway caches to answer permission checks.
 type UserAccessDTO struct {
-	UserID      uint     `json:"user_id"`
-	Email       string   `json:"email"`
-	Name        string   `json:"name"`
-	Roles       []string `json:"roles"`
-	Permissions []string `json:"permissions"`
+	UserID        uint     `json:"user_id"`
+	Email         string   `json:"email"`
+	Name          string   `json:"name"`
+	Roles         []string `json:"roles"`
+	Permissions   []string `json:"permissions"`
+	TwoFARequired bool     `json:"twofa_required"`
 }
 
 // RequestPasswordResetRequest is the email to generate a reset token for.

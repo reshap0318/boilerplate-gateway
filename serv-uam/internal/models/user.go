@@ -15,6 +15,7 @@ type User struct {
 	Status              string         `gorm:"size:20;not null;default:active" json:"status"`
 	FailedLoginAttempts int            `gorm:"column:failed_login_attempts;not null;default:0" json:"-"`
 	LockedUntil         *time.Time     `gorm:"column:locked_until" json:"-"`
+	TwoFA               bool           `gorm:"column:twofa;not null;default:false" json:"twofa"`
 	CreatedAt           time.Time      `json:"created_at"`
 	UpdatedAt           time.Time      `json:"updated_at"`
 	DeletedAt           gorm.DeletedAt `gorm:"index" json:"-"`

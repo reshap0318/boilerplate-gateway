@@ -16,7 +16,11 @@ async function handleLogin() {
   if (!isValid) return
 
   try {
-    await authStore.login()
+    const twoFactorRequired = await authStore.login()
+    if (twoFactorRequired) {
+      router.push('/2fa')
+      return
+    }
     swal.success('Login Berhasil')
     router.push('/')
   } catch (error: any) {

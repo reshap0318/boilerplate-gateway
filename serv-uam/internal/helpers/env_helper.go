@@ -22,3 +22,8 @@ func GetEnvInt(key string, defaultValue int) int {
 	}
 	return defaultValue
 }
+
+// MessageBaseURL is where serv-message is reachable.
+func MessageBaseURL() string {
+	return GetEnv("SVC_MESSAGE_URL", "http://message:8080")
+}

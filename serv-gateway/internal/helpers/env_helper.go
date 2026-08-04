@@ -22,3 +22,8 @@ func GetEnvInt(key string, defaultValue int) int {
 	}
 	return defaultValue
 }
+
+// UamBaseURL is where serv-uam is reachable.
+func UamBaseURL() string {
+	return GetEnv("SVC_UAM_URL", "http://uam:8080")
+}

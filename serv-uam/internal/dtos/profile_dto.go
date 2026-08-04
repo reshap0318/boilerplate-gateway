@@ -23,6 +23,7 @@ type ProfileDTO struct {
 	Email       string          `json:"email"`
 	Name        string          `json:"name"`
 	Avatar      *string         `json:"avatar"`
+	TwoFA       bool            `json:"twofa"`
 	CreatedAt   time.Time       `json:"created_at"`
 	Roles       []RoleDTO       `json:"roles"`
 	Permissions []PermissionDTO `json:"permissions"`
@@ -47,6 +48,7 @@ func ToProfileDTO(u *models.User) ProfileDTO {
 		Email:       u.Email,
 		Name:        u.Name,
 		Avatar:      nil,
+		TwoFA:       u.TwoFA,
 		CreatedAt:   u.CreatedAt,
 		Roles:       ToRoleDTOList(u.Roles),
 		Permissions: permissions,

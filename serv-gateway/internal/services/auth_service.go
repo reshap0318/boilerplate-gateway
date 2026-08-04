@@ -45,7 +45,7 @@ func (s *Services) AuthValidateToken(tokenString string) (*helpers.JWTClaims, er
 	return claims, nil
 }
 
-// AuthLogin authenticates a user via serv-uam and returns tokens.
+// AuthLogin authenticates a user via serv-uam and returns tokens, or triggers a 2FA code.
 func (s *Services) AuthLogin(ctx context.Context, email, password string) (*dtos.LoginResponse, error) {
 	s.Logger.LogStart("AuthLogin", "User login attempt: %s", email)
 
@@ -56,17 +56,35 @@ func (s *Services) AuthLogin(ctx context.Context, email, password string) (*dtos
 	}
 	s.Logger.LogStep("AuthLogin", "Credentials verified: %s", email)
 
+	if access.TwoFARequired {
+		if err := s.TwoFASend(ctx, email); err != nil {
+			s.Logger.LogError("AuthLogin", "Failed to request 2FA code: %v", err)
+			s.Logger.LogEndWithError("AuthLogin", "Login failed - 2FA code dispatch error")
+			return nil, err
+		}
+		s.Logger.LogEnd("AuthLogin", "2FA code sent, awaiting verification: %s", email)
+		return &dtos.LoginResponse{TwoFARequired: true}, nil
+	}
+
+	response, err := s.issueTokens(access)
+	if err != nil {
+		s.Logger.LogEndWithError("AuthLogin", "Login failed - token generation error")
+		return nil, err
+	}
+
+	s.Logger.LogEnd("AuthLogin", "Login successful for user: %s", email)
+	return response, nil
+}
+
+// issueTokens generates and stores tokens for an already-verified identity.
+func (s *Services) issueTokens(access *dtos.UamAccessDTO) (*dtos.LoginResponse, error) {
 	token, tokenClaims, err := s.generateTokenWithClaims(access.UserID, access.Email, access.Name, access.Roles, access.Permissions)
 	if err != nil {
-		s.Logger.LogError("AuthLogin", "Failed to generate token: %v", err)
-		s.Logger.LogEndWithError("AuthLogin", "Login failed - token generation error")
 		return nil, err
 	}
 
 	refreshToken, refreshClaims, err := s.generateRefreshTokenWithClaims(access.UserID, access.Email, access.Name, access.Roles, access.Permissions)
 	if err != nil {
-		s.Logger.LogError("AuthLogin", "Failed to generate refresh token: %v", err)
-		s.Logger.LogEndWithError("AuthLogin", "Login failed - refresh token generation error")
 		return nil, err
 	}
 
@@ -74,7 +92,6 @@ func (s *Services) AuthLogin(ctx context.Context, email, password string) (*dtos
 	s.storeSession(access.UserID, refreshClaims)
 	s.Access.Seed(access.UserID, access.Roles, access.Permissions)
 
-	s.Logger.LogEnd("AuthLogin", "Login successful for user: %s", email)
 	return &dtos.LoginResponse{
 		Token:        token,
 		RefreshToken: refreshToken,
@@ -255,7 +272,7 @@ func (s *Services) verifyCredentialsWithUAM(ctx context.Context, email, password
 // buildUserDTO assembles the LoginResponse.User field from flat role/permission names —
 // IDs/descriptions aren't available here (serv-uam's access endpoints return names only; the
 // full objects live behind its own /roles, /permissions endpoints), so those are left zero.
-func buildUserDTO(userID uint, email, name string, roles, permissions []string) dtos.UserDTO {
+func buildUserDTO(userID uint, email, name string, roles, permissions []string) *dtos.UserDTO {
 	roleDTOs := make([]dtos.RoleMiniDTO, len(roles))
 	for i, r := range roles {
 		roleDTOs[i] = dtos.RoleMiniDTO{Name: r}
@@ -264,7 +281,7 @@ func buildUserDTO(userID uint, email, name string, roles, permissions []string) 
 	for i, p := range permissions {
 		permDTOs[i] = dtos.PermissionDTO{Name: p}
 	}
-	return dtos.UserDTO{
+	return &dtos.UserDTO{
 		ID:          userID,
 		Email:       email,
 		Name:        name,

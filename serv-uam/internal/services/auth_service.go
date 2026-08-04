@@ -48,7 +48,9 @@ func (s *Services) AuthVerify(ctx context.Context, req dtos.AuthVerifyRequest) (
 	}
 
 	s.Logger.LogCtx(ctx, "AuthVerify", "Login successful: %s", req.Email)
-	return buildUserAccessDTO(user), nil
+	access := buildUserAccessDTO(user)
+	access.TwoFARequired = user.TwoFA
+	return access, nil
 }
 
 // UserGetAccess resolves a user's current roles/permissions by ID — used by

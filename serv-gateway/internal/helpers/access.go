@@ -24,11 +24,6 @@ func accessKey(userID uint) string {
 	return fmt.Sprintf("access:%d", userID)
 }
 
-// UamBaseURL is where serv-uam is reachable.
-func UamBaseURL() string {
-	return GetEnv("UAM_SERVICE_URL", "http://localhost:8081")
-}
-
 // Access checks permissions/roles: Redis cache, serv-uam as source of truth on a miss.
 type Access struct {
 	redis *database.RedisCache

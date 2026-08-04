@@ -18,6 +18,7 @@ import {
   PhCheckCircle,
   PhLockKey,
   PhLockKeyOpen,
+  PhDeviceMobile,
 } from '@phosphor-icons/vue'
 
 const userStore = useUserStore()
@@ -25,6 +26,7 @@ const { hasAllPermissions } = usePermission()
 const formModalRef = ref<InstanceType<typeof FormModal> | null>(null)
 const statusUpdatingId = ref<number | null>(null)
 const unlockingId = ref<number | null>(null)
+const twoFAUpdatingId = ref<number | null>(null)
 
 const colorPalette = [
   'bg-blue-500',
@@ -93,6 +95,16 @@ async function handleUnlock(id: number) {
     await userStore.fetchAll(userStore.indexData.pagination.page)
   } finally {
     unlockingId.value = null
+  }
+}
+
+async function toggleTwoFA(id: number, enabled: boolean) {
+  twoFAUpdatingId.value = id
+  try {
+    await userStore.toggleTwoFA(id, enabled)
+    await userStore.fetchAll(userStore.indexData.pagination.page)
+  } finally {
+    twoFAUpdatingId.value = null
   }
 }
 
@@ -234,6 +246,16 @@ onMounted(() => {
                 >
                   <PhLockKey class="w-3.5 h-3.5" />
                 </span>
+
+                <span
+                  class="inline-flex items-center justify-center w-6 h-6 rounded-full"
+                  :class="
+                    user.twofa ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-400'
+                  "
+                  :title="user.twofa ? '2FA Aktif' : '2FA Nonaktif'"
+                >
+                  <PhDeviceMobile class="w-3.5 h-3.5" />
+                </span>
               </div>
 
               <!-- Roles -->
@@ -293,6 +315,24 @@ onMounted(() => {
             >
               <PhLockKeyOpen class="w-3.5 h-3.5" />
               Unlock
+            </button>
+            <button
+              v-if="hasAllPermissions(['user.edit']) && !user.twofa"
+              class="flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors disabled:opacity-50"
+              :disabled="twoFAUpdatingId === user.id"
+              @click="toggleTwoFA(user.id, true)"
+            >
+              <PhDeviceMobile class="w-3.5 h-3.5" />
+              Aktifkan 2FA
+            </button>
+            <button
+              v-if="hasAllPermissions(['user.edit']) && user.twofa"
+              class="flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors disabled:opacity-50"
+              :disabled="twoFAUpdatingId === user.id"
+              @click="toggleTwoFA(user.id, false)"
+            >
+              <PhDeviceMobile class="w-3.5 h-3.5" />
+              Nonaktifkan 2FA
             </button>
             <button
               v-if="hasAllPermissions(['user.edit'])"

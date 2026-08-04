@@ -14,6 +14,7 @@ export interface IUser {
   avatar: string | null
   status: TUserStatus
   locked_until: string | null
+  twofa: boolean
   created_at: string
   roles: IRole[]
   permissions: IPermission[]
@@ -110,6 +111,20 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
+  // 2FA (admin-only — the user cannot toggle their own), same independent-endpoint pattern
+  // as updateStatus/unlock above.
+  async function toggleTwoFA(id: number, enabled: boolean): Promise<IUser | null> {
+    try {
+      const { data } = await put<IApiResponse<IUser>>(`/api/svc/uam/users/${id}/2fa`, {
+        twofa: enabled,
+      })
+      return data.data
+    } catch (error: any) {
+      console.error('Failed to update 2FA setting', error)
+      throw error
+    }
+  }
+
   async function unlock(id: number): Promise<IUser | null> {
     try {
       const { data } = await post<IApiResponse<IUser>>(`/api/svc/uam/users/${id}/unlock`, {})
@@ -127,6 +142,7 @@ export const useUserStore = defineStore('user', () => {
     update,
     fetchAllUsers,
     updateStatus,
+    toggleTwoFA,
     unlock,
   }
 })

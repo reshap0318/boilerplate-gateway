@@ -88,3 +88,42 @@ func (h *Handlers) ResetPassword(c *gin.Context) {
 
 	helpers.OK(c, "Password reset successfully", gin.H{"email": email})
 }
+
+// TwoFASend generates and emails a 2FA code, called by api-gateway after password verification.
+func (h *Handlers) TwoFASend(c *gin.Context) {
+	var req dtos.TwoFASendRequest
+	if err := c.BindJSON(&req); err != nil {
+		helpers.BadRequest(c, "Invalid JSON payload")
+		return
+	}
+	if err := h.Validate.Struct(req); err != nil {
+		helpers.ValidationResponse(c, h.getErrorsMap(err))
+		return
+	}
+
+	if err := h.svcs.TwoFASend(c.Request.Context(), req.Email); helpers.HandleError(c, err, "Failed to send 2FA code") {
+		return
+	}
+
+	helpers.OK(c, "2FA code sent", nil)
+}
+
+// TwoFAVerify checks a submitted 2FA code and resolves the user's access.
+func (h *Handlers) TwoFAVerify(c *gin.Context) {
+	var req dtos.TwoFAVerifyRequest
+	if err := c.BindJSON(&req); err != nil {
+		helpers.BadRequest(c, "Invalid JSON payload")
+		return
+	}
+	if err := h.Validate.Struct(req); err != nil {
+		helpers.ValidationResponse(c, h.getErrorsMap(err))
+		return
+	}
+
+	result, err := h.svcs.TwoFAVerify(c.Request.Context(), req.Email, req.Code)
+	if helpers.HandleError(c, err, "Failed to verify 2FA code") {
+		return
+	}
+
+	helpers.OK(c, "2FA code verified", result)
+}

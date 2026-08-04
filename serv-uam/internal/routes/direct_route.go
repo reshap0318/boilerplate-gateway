@@ -14,5 +14,7 @@ func RegisterDirectRoutes(r *gin.Engine, h *handlers.Handlers) {
 	r.GET("/users/:id/access", h.UserGetAccess)
 	r.POST("/auth/forgot-password", h.RequestPasswordReset)
 	r.POST("/auth/reset-password", h.ResetPassword)
+	r.POST("/auth/2fa/send", h.TwoFASend)
+	r.POST("/auth/2fa/verify", h.TwoFAVerify)
 	r.POST("/audit-logs", h.AuditLogCreate)
 }

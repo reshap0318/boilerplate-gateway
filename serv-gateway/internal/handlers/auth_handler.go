@@ -73,6 +73,37 @@ func (h *Handlers) AuthRefreshToken(c *gin.Context) {
 	helpers.OK(c, "Token refreshed successfully", response)
 }
 
+// TwoFAVerify completes a login for a user with 2FA enabled.
+// @Summary Verify 2FA code
+// @Description Verifies an emailed 2FA code and returns JWT tokens
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body dtos.TwoFAVerifyRequest true "Email + code"
+// @Success 200 {object} dtos.LoginResponse
+// @Failure 401 {object} map[string]string
+// @Router /api/auth/2fa/verify [post]
+func (h *Handlers) TwoFAVerify(c *gin.Context) {
+	var req dtos.TwoFAVerifyRequest
+
+	if err := c.BindJSON(&req); err != nil {
+		helpers.BadRequest(c, "Invalid JSON payload")
+		return
+	}
+
+	if err := h.Validate.Struct(req); err != nil {
+		helpers.ValidationResponse(c, h.getErrorsMap(err))
+		return
+	}
+
+	response, err := h.svcs.TwoFAVerify(c.Request.Context(), req.Email, req.Code)
+	if helpers.HandleError(c, err, "2FA verification failed") {
+		return
+	}
+
+	helpers.OK(c, "Login successful", response)
+}
+
 // AuthForgotPassword handles a password-reset request, forwarded to serv-uam.
 // @Summary Request password reset
 // @Description Generates a password reset token and emails it (never reveals if the email exists)
