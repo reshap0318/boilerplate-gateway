@@ -50,9 +50,16 @@ func BuildEmailMessage(config *EmailConfig, req EmailRequest) (string, error) {
 	builder.WriteString("Content-Transfer-Encoding: base64\r\n")
 	builder.WriteString("\r\n")
 
-	// Body (base64 encoded)
+	// RFC 2045: base64 body lines must wrap at 76 chars.
 	body := base64.StdEncoding.EncodeToString([]byte(req.Body))
-	builder.WriteString(body)
+	for i := 0; i < len(body); i += 76 {
+		end := i + 76
+		if end > len(body) {
+			end = len(body)
+		}
+		builder.WriteString(body[i:end])
+		builder.WriteString("\r\n")
+	}
 
 	return builder.String(), nil
 }

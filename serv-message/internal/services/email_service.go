@@ -28,17 +28,22 @@ func (s *Services) EmailSendTemplate(ctx context.Context, req dtos.EmailTemplate
 
 	s.Logger.LogCtx(ctx, "EmailSendTemplate", "Sending template email %s to %v", req.Template, req.To)
 
-	err := s.Email.SendEmail(email.EmailRequest{
+	emailReq := email.EmailRequest{
 		To:      req.To,
 		CC:      req.CC,
 		BCC:     req.BCC,
 		Subject: subject,
 		Body:    templates.Layout(appName, content),
-	})
-	if err != nil {
-		s.Logger.LogCtx(ctx, "EmailSendTemplate", "Failed to send template email: %v", err)
 	}
-	return err
+	go func() {
+		if err := s.Email.SendEmail(emailReq); err != nil {
+			s.Logger.LogCtx(ctx, "EmailSendTemplate", "Failed to send template email: %v", err)
+			return
+		}
+		s.Logger.LogCtx(ctx, "EmailSendTemplate", "Template email sent: %v", req.To)
+	}()
+
+	return nil
 }
 
 // EmailSendCustom sends a caller-supplied HTML body wrapped in the shared layout.
@@ -47,15 +52,20 @@ func (s *Services) EmailSendCustom(ctx context.Context, req dtos.EmailCustomRequ
 
 	s.Logger.LogCtx(ctx, "EmailSendCustom", "Sending custom email to %v", req.To)
 
-	err := s.Email.SendEmail(email.EmailRequest{
+	emailReq := email.EmailRequest{
 		To:      req.To,
 		CC:      req.CC,
 		BCC:     req.BCC,
 		Subject: req.Subject,
 		Body:    templates.Layout(appName, req.Body),
-	})
-	if err != nil {
-		s.Logger.LogCtx(ctx, "EmailSendCustom", "Failed to send custom email: %v", err)
 	}
-	return err
+	go func() {
+		if err := s.Email.SendEmail(emailReq); err != nil {
+			s.Logger.LogCtx(ctx, "EmailSendCustom", "Failed to send custom email: %v", err)
+			return
+		}
+		s.Logger.LogCtx(ctx, "EmailSendCustom", "Custom email sent: %v", req.To)
+	}()
+
+	return nil
 }

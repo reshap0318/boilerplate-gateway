@@ -21,7 +21,7 @@ func NewEmailClient() *EmailClient {
 			Port:     helpers.GetEnv("SMTP_PORT", "587"),
 			User:     helpers.GetEnv("SMTP_USER", ""),
 			Password: helpers.GetEnv("SMTP_PASSWORD", ""),
-			From:     helpers.GetEnv("SMTP_FROM", "noreply@example.com"),
+			From:     fmt.Sprintf("%s <%s>", helpers.GetEnv("APP_NAME", "Rupiah Digital"), helpers.GetEnv("SMTP_FROM", "noreply@example.com")),
 		},
 	}
 }
@@ -100,10 +100,13 @@ func (c *EmailClient) send(to, message string) error {
 		c.config.Host,
 	)
 
+	// MAIL FROM needs a bare address, not "Name <addr>".
+	_, fromAddr := parseFromAddress(c.config.From)
+
 	return smtp.SendMail(
 		addr,
 		auth,
-		c.config.From,
+		fromAddr,
 		[]string{to},
 		[]byte(message),
 	)

@@ -51,6 +51,8 @@ services:
     depends_on:
       gateway:
         condition: service_healthy
+    volumes:
+      - ./serv-uam/storage:/app/storage
     networks:
       - gateway-net
       - mysql-network
@@ -75,6 +77,8 @@ services:
     depends_on:
       gateway:
         condition: service_healthy
+    volumes:
+      - ./serv-message/storage:/app/storage
     networks:
       - gateway-net
       - mysql-network
