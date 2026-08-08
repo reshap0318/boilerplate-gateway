@@ -1,6 +1,7 @@
 package helpers
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -219,56 +220,65 @@ func (l *Logger) Close() error {
 
 // ==================== Structured Logging Helpers ====================
 
+// traceTag renders the request's trace id (see middleware.TraceID) as a log prefix, or "" if absent.
+func traceTag(ctx context.Context) string {
+	traceID := GetTraceID(ctx)
+	if traceID == "" {
+		return ""
+	}
+	return fmt.Sprintf("[trace:%s] ", traceID)
+}
+
 // LogStart logs the start of a function/operation.
-// Usage: logger.LogStart("AuthLogin", "User login attempt: %s", email)
-func (l *Logger) LogStart(function, format string, v ...interface{}) {
-	l.Printf("[%s] ▶ [START] %s", function, fmt.Sprintf(format, v...))
+// Usage: logger.LogStart(ctx, "AuthLogin", "User login attempt: %s", email)
+func (l *Logger) LogStart(ctx context.Context, function, format string, v ...interface{}) {
+	l.Printf("%s[%s] ▶ [START] %s", traceTag(ctx), function, fmt.Sprintf(format, v...))
 }
 
 // LogStep logs a step/operation inside a function (with indentation).
-// Usage: logger.LogStep("AuthLogin", "User found: %s", email)
-func (l *Logger) LogStep(function, format string, v ...interface{}) {
-	l.Printf("[%s]   ├─ %s", function, fmt.Sprintf(format, v...))
+// Usage: logger.LogStep(ctx, "AuthLogin", "User found: %s", email)
+func (l *Logger) LogStep(ctx context.Context, function, format string, v ...interface{}) {
+	l.Printf("%s[%s]   ├─ %s", traceTag(ctx), function, fmt.Sprintf(format, v...))
 }
 
 // LogStepWithPrefix logs a step with custom prefix.
-// Usage: logger.LogStepWithPrefix("AuthLogin", "[OK]", "Password validated")
-func (l *Logger) LogStepWithPrefix(function, prefix, format string, v ...interface{}) {
-	l.Printf("[%s]   %s %s", function, prefix, fmt.Sprintf(format, v...))
+// Usage: logger.LogStepWithPrefix(ctx, "AuthLogin", "[OK]", "Password validated")
+func (l *Logger) LogStepWithPrefix(ctx context.Context, function, prefix, format string, v ...interface{}) {
+	l.Printf("%s[%s]   %s %s", traceTag(ctx), function, prefix, fmt.Sprintf(format, v...))
 }
 
 // LogEnd logs the successful end of a function/operation.
-// Usage: logger.LogEnd("AuthLogin", "Login successful (duration: %v)", duration)
-func (l *Logger) LogEnd(function, format string, v ...interface{}) {
-	l.Printf("[%s] ✓ [END] %s", function, fmt.Sprintf(format, v...))
+// Usage: logger.LogEnd(ctx, "AuthLogin", "Login successful (duration: %v)", duration)
+func (l *Logger) LogEnd(ctx context.Context, function, format string, v ...interface{}) {
+	l.Printf("%s[%s] ✓ [END] %s", traceTag(ctx), function, fmt.Sprintf(format, v...))
 }
 
 // LogError logs an error in a function/operation.
-// Usage: logger.LogError("AuthLogin", "Failed to login: %v", err)
-func (l *Logger) LogError(function, format string, v ...interface{}) {
-	l.Printf("[%s] ✗ [ERROR] %s", function, fmt.Sprintf(format, v...))
+// Usage: logger.LogError(ctx, "AuthLogin", "Failed to login: %v", err)
+func (l *Logger) LogError(ctx context.Context, function, format string, v ...interface{}) {
+	l.Printf("%s[%s] ✗ [ERROR] %s", traceTag(ctx), function, fmt.Sprintf(format, v...))
 }
 
 // LogEndWithError logs the end of a function with error.
-// Usage: logger.LogEndWithError("AuthLogin", "Login failed: %v", err)
-func (l *Logger) LogEndWithError(function, format string, v ...interface{}) {
-	l.Printf("[%s] ✗ [END] %s", function, fmt.Sprintf(format, v...))
+// Usage: logger.LogEndWithError(ctx, "AuthLogin", "Login failed: %v", err)
+func (l *Logger) LogEndWithError(ctx context.Context, function, format string, v ...interface{}) {
+	l.Printf("%s[%s] ✗ [END] %s", traceTag(ctx), function, fmt.Sprintf(format, v...))
 }
 
 // LogInfo logs an info message.
-// Usage: logger.LogInfo("AuthLogin", "User logged in successfully")
-func (l *Logger) LogInfo(function, format string, v ...interface{}) {
-	l.Printf("[%s] [INFO] %s", function, fmt.Sprintf(format, v...))
+// Usage: logger.LogInfo(ctx, "AuthLogin", "User logged in successfully")
+func (l *Logger) LogInfo(ctx context.Context, function, format string, v ...interface{}) {
+	l.Printf("%s[%s] [INFO] %s", traceTag(ctx), function, fmt.Sprintf(format, v...))
 }
 
 // LogWarn logs a warning message.
-// Usage: logger.LogWarn("AuthLogin", "Multiple failed login attempts")
-func (l *Logger) LogWarn(function, format string, v ...interface{}) {
-	l.Printf("[%s] [WARN] %s", function, fmt.Sprintf(format, v...))
+// Usage: logger.LogWarn(ctx, "AuthLogin", "Multiple failed login attempts")
+func (l *Logger) LogWarn(ctx context.Context, function, format string, v ...interface{}) {
+	l.Printf("%s[%s] [WARN] %s", traceTag(ctx), function, fmt.Sprintf(format, v...))
 }
 
 // LogDebug logs a debug message.
-// Usage: logger.LogDebug("AuthLogin", "Token payload: %+v", payload)
-func (l *Logger) LogDebug(function, format string, v ...interface{}) {
-	l.Printf("[%s] [DEBUG] %s", function, fmt.Sprintf(format, v...))
+// Usage: logger.LogDebug(ctx, "AuthLogin", "Token payload: %+v", payload)
+func (l *Logger) LogDebug(ctx context.Context, function, format string, v ...interface{}) {
+	l.Printf("%s[%s] [DEBUG] %s", traceTag(ctx), function, fmt.Sprintf(format, v...))
 }

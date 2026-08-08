@@ -20,7 +20,7 @@ func sessionKey(userID uint, jti string) string {
 }
 
 // AuthValidateToken validates a JWT token's signature/expiry and its session entry in Redis.
-func (s *Services) AuthValidateToken(tokenString string) (*helpers.JWTClaims, error) {
+func (s *Services) AuthValidateToken(ctx context.Context, tokenString string) (*helpers.JWTClaims, error) {
 	claims, err := helpers.ValidateToken(tokenString, s.JWKSManager.GetPublicKey())
 	if err != nil {
 		return nil, helpers.ErrInvalidToken
@@ -33,7 +33,7 @@ func (s *Services) AuthValidateToken(tokenString string) (*helpers.JWTClaims, er
 	// Fail-closed: Redis is the only place session validity is tracked now, so if it's
 	// unreachable we can't confirm the token wasn't logged out — reject rather than guess.
 	if !s.RedisClient.IsCacheAvailable() {
-		s.Logger.LogWarn("AuthValidateToken", "Redis unavailable, rejecting token for user %d", claims.UserID)
+		s.Logger.LogWarn(ctx, "AuthValidateToken", "Redis unavailable, rejecting token for user %d", claims.UserID)
 		return nil, helpers.ErrInvalidToken
 	}
 
@@ -47,37 +47,37 @@ func (s *Services) AuthValidateToken(tokenString string) (*helpers.JWTClaims, er
 
 // AuthLogin authenticates a user via serv-uam and returns tokens, or triggers a 2FA code.
 func (s *Services) AuthLogin(ctx context.Context, email, password string) (*dtos.LoginResponse, error) {
-	s.Logger.LogStart("AuthLogin", "User login attempt: %s", email)
+	s.Logger.LogStart(ctx, "AuthLogin", "User login attempt: %s", email)
 
 	access, err := s.verifyCredentialsWithUAM(ctx, email, password)
 	if err != nil {
-		s.Logger.LogEndWithError("AuthLogin", "Login failed: %v", err)
+		s.Logger.LogEndWithError(ctx, "AuthLogin", "Login failed: %v", err)
 		return nil, err
 	}
-	s.Logger.LogStep("AuthLogin", "Credentials verified: %s", email)
+	s.Logger.LogStep(ctx, "AuthLogin", "Credentials verified: %s", email)
 
 	if access.TwoFARequired {
 		if err := s.TwoFASend(ctx, email); err != nil {
-			s.Logger.LogError("AuthLogin", "Failed to request 2FA code: %v", err)
-			s.Logger.LogEndWithError("AuthLogin", "Login failed - 2FA code dispatch error")
+			s.Logger.LogError(ctx, "AuthLogin", "Failed to request 2FA code: %v", err)
+			s.Logger.LogEndWithError(ctx, "AuthLogin", "Login failed - 2FA code dispatch error")
 			return nil, err
 		}
-		s.Logger.LogEnd("AuthLogin", "2FA code sent, awaiting verification: %s", email)
+		s.Logger.LogEnd(ctx, "AuthLogin", "2FA code sent, awaiting verification: %s", email)
 		return &dtos.LoginResponse{TwoFARequired: true}, nil
 	}
 
-	response, err := s.issueTokens(access)
+	response, err := s.issueTokens(ctx, access)
 	if err != nil {
-		s.Logger.LogEndWithError("AuthLogin", "Login failed - token generation error")
+		s.Logger.LogEndWithError(ctx, "AuthLogin", "Login failed - token generation error")
 		return nil, err
 	}
 
-	s.Logger.LogEnd("AuthLogin", "Login successful for user: %s", email)
+	s.Logger.LogEnd(ctx, "AuthLogin", "Login successful for user: %s", email)
 	return response, nil
 }
 
 // issueTokens generates and stores tokens for an already-verified identity.
-func (s *Services) issueTokens(access *dtos.UamAccessDTO) (*dtos.LoginResponse, error) {
+func (s *Services) issueTokens(ctx context.Context, access *dtos.UamAccessDTO) (*dtos.LoginResponse, error) {
 	token, tokenClaims, err := s.generateTokenWithClaims(access.UserID, access.Email, access.Name, access.Roles, access.Permissions)
 	if err != nil {
 		return nil, err
@@ -88,8 +88,8 @@ func (s *Services) issueTokens(access *dtos.UamAccessDTO) (*dtos.LoginResponse, 
 		return nil, err
 	}
 
-	s.storeSession(access.UserID, tokenClaims)
-	s.storeSession(access.UserID, refreshClaims)
+	s.storeSession(ctx, access.UserID, tokenClaims)
+	s.storeSession(ctx, access.UserID, refreshClaims)
 	s.Access.Seed(access.UserID, access.Roles, access.Permissions)
 
 	return &dtos.LoginResponse{
@@ -101,30 +101,30 @@ func (s *Services) issueTokens(access *dtos.UamAccessDTO) (*dtos.LoginResponse, 
 
 // AuthRefreshToken refreshes the access token using a refresh token.
 func (s *Services) AuthRefreshToken(ctx context.Context, refreshToken string) (*dtos.LoginResponse, error) {
-	s.Logger.LogStart("AuthRefreshToken", "Token refresh attempt")
+	s.Logger.LogStart(ctx, "AuthRefreshToken", "Token refresh attempt")
 
-	claims, err := s.AuthValidateToken(refreshToken)
+	claims, err := s.AuthValidateToken(ctx, refreshToken)
 	if err != nil {
-		s.Logger.LogEndWithError("AuthRefreshToken", "Token refresh failed - invalid token")
+		s.Logger.LogEndWithError(ctx, "AuthRefreshToken", "Token refresh failed - invalid token")
 		return nil, err
 	}
 
 	token, tokenClaims, err := s.generateTokenWithClaims(claims.UserID, claims.Email, claims.Name, claims.Roles, claims.Permissions)
 	if err != nil {
-		s.Logger.LogError("AuthRefreshToken", "Failed to generate token: %v", err)
+		s.Logger.LogError(ctx, "AuthRefreshToken", "Failed to generate token: %v", err)
 		return nil, err
 	}
 
 	newRefreshToken, newRefreshClaims, err := s.generateRefreshTokenWithClaims(claims.UserID, claims.Email, claims.Name, claims.Roles, claims.Permissions)
 	if err != nil {
-		s.Logger.LogError("AuthRefreshToken", "Failed to generate refresh token: %v", err)
+		s.Logger.LogError(ctx, "AuthRefreshToken", "Failed to generate refresh token: %v", err)
 		return nil, err
 	}
 
-	s.storeSession(claims.UserID, tokenClaims)
-	s.storeSession(claims.UserID, newRefreshClaims)
+	s.storeSession(ctx, claims.UserID, tokenClaims)
+	s.storeSession(ctx, claims.UserID, newRefreshClaims)
 
-	s.Logger.LogEnd("AuthRefreshToken", "Token refreshed successfully for user: %s", claims.Email)
+	s.Logger.LogEnd(ctx, "AuthRefreshToken", "Token refreshed successfully for user: %s", claims.Email)
 	return &dtos.LoginResponse{
 		Token:        token,
 		RefreshToken: newRefreshToken,
@@ -211,9 +211,9 @@ func (s *Services) AuthResetPassword(ctx context.Context, token, newPassword str
 
 // storeSession writes the session:{userID}:{jti} presence marker for a newly issued token,
 // TTL'd to match its own expiry.
-func (s *Services) storeSession(userID uint, claims *helpers.JWTClaims) {
+func (s *Services) storeSession(ctx context.Context, userID uint, claims *helpers.JWTClaims) {
 	if !s.RedisClient.IsCacheAvailable() {
-		s.Logger.LogWarn("storeSession", "Redis unavailable — token for user %d will fail validation", userID)
+		s.Logger.LogWarn(ctx, "storeSession", "Redis unavailable — token for user %d will fail validation", userID)
 		return
 	}
 	ttl := time.Until(claims.ExpiresAt.Time)
@@ -221,7 +221,7 @@ func (s *Services) storeSession(userID uint, claims *helpers.JWTClaims) {
 		return
 	}
 	if err := s.RedisClient.Set(sessionKey(userID, claims.ID), "1", ttl); err != nil {
-		s.Logger.LogWarn("storeSession", "Failed to store session for user %d: %v", userID, err)
+		s.Logger.LogWarn(ctx, "storeSession", "Failed to store session for user %d: %v", userID, err)
 	}
 }
 

@@ -26,7 +26,7 @@ func ExtractBearerClaims(c *gin.Context, svcs *services.Services) (*helpers.JWTC
 		return nil, errors.New("Invalid authorization header format")
 	}
 
-	claims, err := svcs.AuthValidateToken(parts[1])
+	claims, err := svcs.AuthValidateToken(c.Request.Context(), parts[1])
 	if err != nil {
 		return nil, errors.New("Invalid or expired token")
 	}

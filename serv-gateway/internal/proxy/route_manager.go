@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -147,13 +148,13 @@ func (rm *RouteManager) Refresh() error {
 	// wrongly think a racing mutation is already reflected in this build.
 	version, verr := rm.repo.GetCacheVersion(nil)
 	if verr != nil && rm.logger != nil {
-		rm.logger.LogWarn("RouteManager.Refresh", "Failed to read cache version: %v", verr)
+		rm.logger.LogWarn(context.Background(), "RouteManager.Refresh", "Failed to read cache version: %v", verr)
 	}
 
 	services, err := rm.repo.FindAllActiveWithRoutes(nil)
 	if err != nil {
 		if rm.logger != nil {
-			rm.logger.LogWarn("RouteManager.Refresh", "Failed to load routes, keeping existing cache: %v", err)
+			rm.logger.LogWarn(context.Background(), "RouteManager.Refresh", "Failed to load routes, keeping existing cache: %v", err)
 		}
 		return err
 	}
@@ -165,7 +166,7 @@ func (rm *RouteManager) Refresh() error {
 		if !ok {
 			built, err := newReverseProxy(svc.BaseURL)
 			if err != nil && rm.logger != nil {
-				rm.logger.LogWarn("RouteManager.Refresh", "Skipping proxy for service %s: %v", svc.Name, err)
+				rm.logger.LogWarn(context.Background(), "RouteManager.Refresh", "Skipping proxy for service %s: %v", svc.Name, err)
 			}
 			proxy = built
 			proxyCache[svc.BaseURL] = proxy
@@ -224,7 +225,7 @@ func (rm *RouteManager) Refresh() error {
 	rm.mu.Unlock()
 
 	if rm.logger != nil {
-		rm.logger.LogInfo("RouteManager.Refresh", "Cache refreshed: %d route(s) from %d service(s)", len(newRoutes), len(services))
+		rm.logger.LogInfo(context.Background(), "RouteManager.Refresh", "Cache refreshed: %d route(s) from %d service(s)", len(newRoutes), len(services))
 	}
 
 	return nil
@@ -244,7 +245,7 @@ func (rm *RouteManager) RefreshAndPublish() error {
 	if rm.redis != nil && rm.redis.IsCacheAvailable() && rm.channel != "" {
 		payload := fmt.Sprintf(`{"type":"route_refresh","triggered_at":%q}`, time.Now().Format(time.RFC3339))
 		if err := rm.redis.Publish(rm.channel, payload); err != nil && rm.logger != nil {
-			rm.logger.LogWarn("RouteManager.RefreshAndPublish", "Failed to publish refresh signal: %v", err)
+			rm.logger.LogWarn(context.Background(), "RouteManager.RefreshAndPublish", "Failed to publish refresh signal: %v", err)
 		}
 	}
 
@@ -272,7 +273,7 @@ func (rm *RouteManager) StartRedisSubscriber() {
 					return
 				}
 				if rm.logger != nil {
-					rm.logger.LogInfo("RouteManager.StartRedisSubscriber", "Refresh signal received: %s", msg.Payload)
+					rm.logger.LogInfo(context.Background(), "RouteManager.StartRedisSubscriber", "Refresh signal received: %s", msg.Payload)
 				}
 				_ = rm.Refresh()
 			case <-rm.stopPubSub:
@@ -282,7 +283,7 @@ func (rm *RouteManager) StartRedisSubscriber() {
 	}()
 
 	if rm.logger != nil {
-		rm.logger.LogInfo("RouteManager.StartRedisSubscriber", "Subscribed to channel: %s", rm.channel)
+		rm.logger.LogInfo(context.Background(), "RouteManager.StartRedisSubscriber", "Subscribed to channel: %s", rm.channel)
 	}
 }
 
@@ -356,7 +357,7 @@ func (rm *RouteManager) RefreshIfStale() error {
 	version, err := rm.repo.GetCacheVersion(nil)
 	if err != nil {
 		if rm.logger != nil {
-			rm.logger.LogWarn("RouteManager.RefreshIfStale", "Version check failed, refreshing anyway: %v", err)
+			rm.logger.LogWarn(context.Background(), "RouteManager.RefreshIfStale", "Version check failed, refreshing anyway: %v", err)
 		}
 		return rm.Refresh()
 	}
@@ -370,7 +371,7 @@ func (rm *RouteManager) RefreshIfStale() error {
 	}
 
 	if rm.logger != nil {
-		rm.logger.LogInfo("RouteManager.RefreshIfStale", "Version changed (%d -> %d), refreshing", lastVersion, version)
+		rm.logger.LogInfo(context.Background(), "RouteManager.RefreshIfStale", "Version changed (%d -> %d), refreshing", lastVersion, version)
 	}
 	return rm.Refresh()
 }

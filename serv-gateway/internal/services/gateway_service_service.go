@@ -14,11 +14,11 @@ import (
 
 // GatewayServiceCreate creates a new upstream service registration.
 func (s *Services) GatewayServiceCreate(ctx context.Context, req dtos.GatewayServiceRequest) (*dtos.GatewayServiceDTO, error) {
-	s.Logger.LogStart("GatewayServiceCreate", "Creating gateway service: %s", req.Name)
+	s.Logger.LogStart(ctx, "GatewayServiceCreate", "Creating gateway service: %s", req.Name)
 
 	exists, err := s.repo.GatewayService.ExistsWithMap(nil, map[string]interface{}{"name": req.Name})
 	if err != nil {
-		s.Logger.LogEndWithError("GatewayServiceCreate", "Failed to check name uniqueness: %v", err)
+		s.Logger.LogEndWithError(ctx, "GatewayServiceCreate", "Failed to check name uniqueness: %v", err)
 		return nil, err
 	}
 	if exists {
@@ -35,7 +35,7 @@ func (s *Services) GatewayServiceCreate(ctx context.Context, req dtos.GatewaySer
 
 	basePathExists, err := s.repo.GatewayService.ExistsWithMap(nil, map[string]interface{}{"base_path": req.BasePath})
 	if err != nil {
-		s.Logger.LogEndWithError("GatewayServiceCreate", "Failed to check base_path uniqueness: %v", err)
+		s.Logger.LogEndWithError(ctx, "GatewayServiceCreate", "Failed to check base_path uniqueness: %v", err)
 		return nil, err
 	}
 	if basePathExists {
@@ -64,16 +64,16 @@ func (s *Services) GatewayServiceCreate(ctx context.Context, req dtos.GatewaySer
 		return err
 	})
 	if err != nil {
-		s.Logger.LogEndWithError("GatewayServiceCreate", "Failed: %v", err)
+		s.Logger.LogEndWithError(ctx, "GatewayServiceCreate", "Failed: %v", err)
 		return nil, err
 	}
 
-	s.RefreshRouteCache("GatewayServiceCreate")
+	s.RefreshRouteCache(ctx, "GatewayServiceCreate")
 
 	dto := dtos.ToGatewayServiceDTO(result)
 	s.recordAuditLog(ctx, "create", "gateway_service", result.ID, fmt.Sprintf("Created service %s", result.Name), map[string]interface{}{"after": dto})
 
-	s.Logger.LogEnd("GatewayServiceCreate", "Gateway service created: %s (ID: %d)", result.Name, result.ID)
+	s.Logger.LogEnd(ctx, "GatewayServiceCreate", "Gateway service created: %s (ID: %d)", result.Name, result.ID)
 	return &dto, nil
 }
 
@@ -140,11 +140,11 @@ func (s *Services) GatewayServiceGetByID(ctx context.Context, id uint) (*dtos.Ga
 
 // GatewayServiceUpdate updates an existing gateway service.
 func (s *Services) GatewayServiceUpdate(ctx context.Context, id uint, req dtos.GatewayServiceRequest) (*dtos.GatewayServiceDTO, error) {
-	s.Logger.LogStart("GatewayServiceUpdate", "Updating gateway service ID: %d", id)
+	s.Logger.LogStart(ctx, "GatewayServiceUpdate", "Updating gateway service ID: %d", id)
 
 	existing, err := s.repo.GatewayService.FindByID(nil, id)
 	if err != nil {
-		s.Logger.LogEndWithError("GatewayServiceUpdate", "Not found: %v", err)
+		s.Logger.LogEndWithError(ctx, "GatewayServiceUpdate", "Not found: %v", err)
 		return nil, err
 	}
 
@@ -206,27 +206,27 @@ func (s *Services) GatewayServiceUpdate(ctx context.Context, id uint, req dtos.G
 		return err
 	})
 	if err != nil {
-		s.Logger.LogEndWithError("GatewayServiceUpdate", "Failed: %v", err)
+		s.Logger.LogEndWithError(ctx, "GatewayServiceUpdate", "Failed: %v", err)
 		return nil, err
 	}
 
-	s.RefreshRouteCache("GatewayServiceUpdate")
+	s.RefreshRouteCache(ctx, "GatewayServiceUpdate")
 
 	dto := dtos.ToGatewayServiceDTO(result)
 	beforeDTO := dtos.ToGatewayServiceDTO(existing)
 	s.recordAuditLog(ctx, "update", "gateway_service", id, fmt.Sprintf("Updated service %s", result.Name), map[string]interface{}{"before": beforeDTO, "after": dto})
 
-	s.Logger.LogEnd("GatewayServiceUpdate", "Gateway service updated: ID %d", id)
+	s.Logger.LogEnd(ctx, "GatewayServiceUpdate", "Gateway service updated: ID %d", id)
 	return &dto, nil
 }
 
 // GatewayServiceDelete soft-deletes a gateway service, cascading to its routes.
 func (s *Services) GatewayServiceDelete(ctx context.Context, id uint, cascade bool) error {
-	s.Logger.LogStart("GatewayServiceDelete", "Deleting gateway service ID: %d", id)
+	s.Logger.LogStart(ctx, "GatewayServiceDelete", "Deleting gateway service ID: %d", id)
 
 	service, err := s.repo.GatewayService.FindByID(nil, id, "Routes")
 	if err != nil {
-		s.Logger.LogEndWithError("GatewayServiceDelete", "Not found: %v", err)
+		s.Logger.LogEndWithError(ctx, "GatewayServiceDelete", "Not found: %v", err)
 		return err
 	}
 
@@ -255,15 +255,15 @@ func (s *Services) GatewayServiceDelete(ctx context.Context, id uint, cascade bo
 		return err
 	})
 	if err != nil {
-		s.Logger.LogEndWithError("GatewayServiceDelete", "Failed: %v", err)
+		s.Logger.LogEndWithError(ctx, "GatewayServiceDelete", "Failed: %v", err)
 		return err
 	}
 
-	s.RefreshRouteCache("GatewayServiceDelete")
+	s.RefreshRouteCache(ctx, "GatewayServiceDelete")
 
 	beforeDTO := dtos.ToGatewayServiceDTO(service)
 	s.recordAuditLog(ctx, "delete", "gateway_service", id, fmt.Sprintf("Deleted service %s", service.Name), map[string]interface{}{"before": beforeDTO})
 
-	s.Logger.LogEnd("GatewayServiceDelete", "Gateway service deleted: ID %d", id)
+	s.Logger.LogEnd(ctx, "GatewayServiceDelete", "Gateway service deleted: ID %d", id)
 	return nil
 }

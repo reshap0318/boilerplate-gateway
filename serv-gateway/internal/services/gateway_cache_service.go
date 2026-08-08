@@ -1,5 +1,7 @@
 package services
 
+import "context"
+
 // RouteCacheRefresher is implemented by proxy.RouteManager. Defined here (instead of
 // importing the proxy package directly) to avoid an import cycle: proxy.Handler needs
 // *services.Services for JWT validation, so services cannot import proxy back.
@@ -9,17 +11,17 @@ type RouteCacheRefresher interface {
 
 // RefreshRouteCache triggers an on-save local cache refresh (FSD §2.18). Errors are logged
 // only — a stale cache is safer than failing the CUD operation that already committed to DB.
-func (s *Services) RefreshRouteCache(caller string) {
+func (s *Services) RefreshRouteCache(ctx context.Context, caller string) {
 	if err := s.repo.GatewayService.TouchCacheVersion(nil); err != nil {
-		s.Logger.LogWarn(caller, "Failed to record cache mutation: %v", err)
+		s.Logger.LogWarn(ctx, caller, "Failed to record cache mutation: %v", err)
 	}
 
 	if s.RouteCache == nil {
 		return
 	}
 	if err := s.RouteCache.Refresh(); err != nil {
-		s.Logger.LogWarn(caller, "On-save route cache refresh failed: %v", err)
+		s.Logger.LogWarn(ctx, caller, "On-save route cache refresh failed: %v", err)
 		return
 	}
-	s.Logger.LogInfo(caller, "On-save route cache refresh triggered")
+	s.Logger.LogInfo(ctx, caller, "On-save route cache refresh triggered")
 }

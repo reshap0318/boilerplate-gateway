@@ -14,7 +14,7 @@ import (
 
 // GatewayRouteCreate creates a new route under a service, with permission assignment.
 func (s *Services) GatewayRouteCreate(ctx context.Context, req dtos.GatewayRouteRequest) (*dtos.GatewayRouteDTO, error) {
-	s.Logger.LogStart("GatewayRouteCreate", "Creating route: %s %s (service %d)", req.Method, req.PathPattern, req.Service)
+	s.Logger.LogStart(ctx, "GatewayRouteCreate", "Creating route: %s %s (service %d)", req.Method, req.PathPattern, req.Service)
 
 	if _, err := s.repo.GatewayService.FindByID(nil, req.Service); err != nil {
 		return nil, &helpers.FieldError{Field: "service", Message: "Service tidak ditemukan"}
@@ -78,17 +78,17 @@ func (s *Services) GatewayRouteCreate(ctx context.Context, req dtos.GatewayRoute
 		return reloaded, nil
 	})
 	if err != nil {
-		s.Logger.LogEndWithError("GatewayRouteCreate", "Failed: %v", err)
+		s.Logger.LogEndWithError(ctx, "GatewayRouteCreate", "Failed: %v", err)
 		return nil, err
 	}
 	result = res.(*models.GatewayRoute)
 
-	s.RefreshRouteCache("GatewayRouteCreate")
+	s.RefreshRouteCache(ctx, "GatewayRouteCreate")
 
 	dto := dtos.ToGatewayRouteDTO(result)
 	s.recordAuditLog(ctx, "create", "gateway_route", result.ID, fmt.Sprintf("Created route %s %s", result.Method, result.PathPattern), map[string]interface{}{"after": dto})
 
-	s.Logger.LogEnd("GatewayRouteCreate", "Route created: ID %d", result.ID)
+	s.Logger.LogEnd(ctx, "GatewayRouteCreate", "Route created: ID %d", result.ID)
 	return &dto, nil
 }
 
@@ -154,11 +154,11 @@ func (s *Services) GatewayRouteGetByID(ctx context.Context, id uint) (*dtos.Gate
 
 // GatewayRouteUpdate updates an existing route, replacing its permission assignment (full replace).
 func (s *Services) GatewayRouteUpdate(ctx context.Context, id uint, req dtos.GatewayRouteRequest) (*dtos.GatewayRouteDTO, error) {
-	s.Logger.LogStart("GatewayRouteUpdate", "Updating route ID: %d", id)
+	s.Logger.LogStart(ctx, "GatewayRouteUpdate", "Updating route ID: %d", id)
 
 	existing, err := s.repo.GatewayRoute.FindByID(nil, id, "Service")
 	if err != nil {
-		s.Logger.LogEndWithError("GatewayRouteUpdate", "Not found: %v", err)
+		s.Logger.LogEndWithError(ctx, "GatewayRouteUpdate", "Not found: %v", err)
 		return nil, err
 	}
 
@@ -213,24 +213,24 @@ func (s *Services) GatewayRouteUpdate(ctx context.Context, id uint, req dtos.Gat
 		return reloaded, nil
 	})
 	if err != nil {
-		s.Logger.LogEndWithError("GatewayRouteUpdate", "Failed: %v", err)
+		s.Logger.LogEndWithError(ctx, "GatewayRouteUpdate", "Failed: %v", err)
 		return nil, err
 	}
 	result = res.(*models.GatewayRoute)
 
-	s.RefreshRouteCache("GatewayRouteUpdate")
+	s.RefreshRouteCache(ctx, "GatewayRouteUpdate")
 
 	dto := dtos.ToGatewayRouteDTO(result)
 	beforeDTO := dtos.ToGatewayRouteDTO(existing)
 	s.recordAuditLog(ctx, "update", "gateway_route", id, fmt.Sprintf("Updated route %s %s", result.Method, result.PathPattern), map[string]interface{}{"before": beforeDTO, "after": dto})
 
-	s.Logger.LogEnd("GatewayRouteUpdate", "Route updated: ID %d", id)
+	s.Logger.LogEnd(ctx, "GatewayRouteUpdate", "Route updated: ID %d", id)
 	return &dto, nil
 }
 
 // GatewayRouteDelete soft-deletes a route.
 func (s *Services) GatewayRouteDelete(ctx context.Context, id uint) error {
-	s.Logger.LogStart("GatewayRouteDelete", "Deleting route ID: %d", id)
+	s.Logger.LogStart(ctx, "GatewayRouteDelete", "Deleting route ID: %d", id)
 
 	var deleted *models.GatewayRoute
 	err := s.repo.TxManager.WithinTransaction(func(tx *gorm.DB) error {
@@ -239,15 +239,15 @@ func (s *Services) GatewayRouteDelete(ctx context.Context, id uint) error {
 		return err
 	})
 	if err != nil {
-		s.Logger.LogEndWithError("GatewayRouteDelete", "Failed: %v", err)
+		s.Logger.LogEndWithError(ctx, "GatewayRouteDelete", "Failed: %v", err)
 		return err
 	}
 
-	s.RefreshRouteCache("GatewayRouteDelete")
+	s.RefreshRouteCache(ctx, "GatewayRouteDelete")
 
 	beforeDTO := dtos.ToGatewayRouteDTO(deleted)
 	s.recordAuditLog(ctx, "delete", "gateway_route", id, fmt.Sprintf("Deleted route %s %s", deleted.Method, deleted.PathPattern), map[string]interface{}{"before": beforeDTO})
 
-	s.Logger.LogEnd("GatewayRouteDelete", "Route deleted: ID %d", id)
+	s.Logger.LogEnd(ctx, "GatewayRouteDelete", "Route deleted: ID %d", id)
 	return nil
 }

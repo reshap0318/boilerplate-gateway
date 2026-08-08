@@ -33,21 +33,21 @@ func (s *Services) TwoFASend(ctx context.Context, email string) error {
 
 // TwoFAVerify completes a 2FA login: verifies the code via serv-uam then issues tokens.
 func (s *Services) TwoFAVerify(ctx context.Context, email, code string) (*dtos.LoginResponse, error) {
-	s.Logger.LogStart("TwoFAVerify", "2FA verify attempt: %s", email)
+	s.Logger.LogStart(ctx, "TwoFAVerify", "2FA verify attempt: %s", email)
 
 	access, err := s.verifyCodeWithUAM(ctx, email, code)
 	if err != nil {
-		s.Logger.LogEndWithError("TwoFAVerify", "2FA verify failed: %v", err)
+		s.Logger.LogEndWithError(ctx, "TwoFAVerify", "2FA verify failed: %v", err)
 		return nil, err
 	}
 
-	response, err := s.issueTokens(access)
+	response, err := s.issueTokens(ctx, access)
 	if err != nil {
-		s.Logger.LogEndWithError("TwoFAVerify", "2FA verify failed - token generation error")
+		s.Logger.LogEndWithError(ctx, "TwoFAVerify", "2FA verify failed - token generation error")
 		return nil, err
 	}
 
-	s.Logger.LogEnd("TwoFAVerify", "2FA login successful for user: %s", email)
+	s.Logger.LogEnd(ctx, "TwoFAVerify", "2FA login successful for user: %s", email)
 	return response, nil
 }
 

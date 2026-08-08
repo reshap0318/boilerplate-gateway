@@ -23,18 +23,18 @@ func (s *Services) recordAuditLog(ctx context.Context, action, entityType string
 		"payloads":    payloads,
 	})
 	if err != nil {
-		s.Logger.LogWarn("recordAuditLog", "Failed to marshal payload: %v", err)
+		s.Logger.LogWarn(ctx, "recordAuditLog", "Failed to marshal payload: %v", err)
 		return
 	}
 
 	url := helpers.UamBaseURL() + "/audit-logs"
 	resp, err := helpers.HTTPCall(ctx, http.MethodPost, url, bytes.NewReader(body))
 	if err != nil {
-		s.Logger.LogWarn("recordAuditLog", "Request failed: %v", err)
+		s.Logger.LogWarn(ctx, "recordAuditLog", "Request failed: %v", err)
 		return
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode >= 300 {
-		s.Logger.LogWarn("recordAuditLog", "Unexpected status %d", resp.StatusCode)
+		s.Logger.LogWarn(ctx, "recordAuditLog", "Unexpected status %d", resp.StatusCode)
 	}
 }

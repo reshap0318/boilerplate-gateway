@@ -19,7 +19,7 @@ func (j *Jobs) HandleClearTmp(ctx context.Context, t *asynq.Task) error {
 	ageHours := helpers.GetEnvInt("TMP_AGE_HOURS", 24)
 	threshold := time.Now().Add(-time.Duration(ageHours) * time.Hour)
 
-	j.svcs.Logger.LogStart("HandleClearTmp", "Scanning %s (files older than %dh)", dir, ageHours)
+	j.svcs.Logger.LogStart(ctx, "HandleClearTmp", "Scanning %s (files older than %dh)", dir, ageHours)
 
 	deleted, errCount := 0, 0
 
@@ -43,21 +43,21 @@ func (j *Jobs) HandleClearTmp(ctx context.Context, t *asynq.Task) error {
 		}
 
 		if err := helpers.DeleteFile(path); err != nil {
-			j.svcs.Logger.LogWarn("HandleClearTmp", "Failed to delete %s: %v", path, err)
+			j.svcs.Logger.LogWarn(ctx, "HandleClearTmp", "Failed to delete %s: %v", path, err)
 			errCount++
 			return nil
 		}
 
 		deleted++
-		j.svcs.Logger.LogStep("HandleClearTmp", "Deleted: %s", path)
+		j.svcs.Logger.LogStep(ctx, "HandleClearTmp", "Deleted: %s", path)
 		return nil
 	})
 
 	if err != nil {
-		j.svcs.Logger.LogEndWithError("HandleClearTmp", "Walk failed: %v", err)
+		j.svcs.Logger.LogEndWithError(ctx, "HandleClearTmp", "Walk failed: %v", err)
 		return fmt.Errorf("%s: walk %s: %w", TypeClearTmp, dir, err)
 	}
 
-	j.svcs.Logger.LogEnd("HandleClearTmp", "Done — deleted: %d, errors: %d", deleted, errCount)
+	j.svcs.Logger.LogEnd(ctx, "HandleClearTmp", "Done — deleted: %d, errors: %d", deleted, errCount)
 	return nil
 }

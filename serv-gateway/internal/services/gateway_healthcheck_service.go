@@ -43,7 +43,7 @@ func (s *Services) GatewayServiceHealthCheck(ctx context.Context, id uint) (*dto
 func (s *Services) GatewayServiceHealthCheckAll(ctx context.Context) {
 	activeServices, err := s.repo.GatewayService.FindByFieldMap(nil, map[string]interface{}{"is_active": true})
 	if err != nil {
-		s.Logger.LogWarn("GatewayServiceHealthCheckAll", "Failed to list active services: %v", err)
+		s.Logger.LogWarn(ctx, "GatewayServiceHealthCheckAll", "Failed to list active services: %v", err)
 		return
 	}
 
@@ -54,11 +54,11 @@ func (s *Services) GatewayServiceHealthCheckAll(ctx context.Context) {
 			"health_status":     status,
 			"health_checked_at": now,
 		}); err != nil {
-			s.Logger.LogWarn("GatewayServiceHealthCheckAll", "Failed to update health for service %d: %v", svc.ID, err)
+			s.Logger.LogWarn(ctx, "GatewayServiceHealthCheckAll", "Failed to update health for service %d: %v", svc.ID, err)
 		}
 	}
 
-	s.Logger.LogInfo("GatewayServiceHealthCheckAll", "Health check completed for %d service(s)", len(activeServices))
+	s.Logger.LogInfo(ctx, "GatewayServiceHealthCheckAll", "Health check completed for %d service(s)", len(activeServices))
 }
 
 // checkServiceHealth sends GET {base_url}/health with a short timeout and classifies the
