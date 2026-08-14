@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -156,22 +157,17 @@ func (s *Services) AuthForgotPassword(ctx context.Context, email string) (string
 	}
 
 	url := helpers.UamBaseURL() + "/auth/forgot-password"
-	resp, err := helpers.HTTPCall(ctx, http.MethodPost, url, bytes.NewReader(body))
+	data, err := helpers.HTTPCall(ctx, http.MethodPost, url, bytes.NewReader(body))
 	if err != nil {
-		return "", fmt.Errorf("uam: request failed: %w", err)
+		return "", fmt.Errorf("uam: %w", err)
 	}
-	defer resp.Body.Close()
 
 	var envelope struct {
 		Message string `json:"message"`
 	}
-	if err := json.NewDecoder(resp.Body).Decode(&envelope); err != nil {
+	if err := json.Unmarshal(data, &envelope); err != nil {
 		return "", fmt.Errorf("uam: decode response: %w", err)
 	}
-	if resp.StatusCode >= 300 {
-		return "", fmt.Errorf("uam: unexpected status %d", resp.StatusCode)
-	}
-
 	return envelope.Message, nil
 }
 
@@ -183,29 +179,26 @@ func (s *Services) AuthResetPassword(ctx context.Context, token, newPassword str
 	}
 
 	url := helpers.UamBaseURL() + "/auth/reset-password"
-	resp, err := helpers.HTTPCall(ctx, http.MethodPost, url, bytes.NewReader(body))
-	if err != nil {
-		return "", fmt.Errorf("uam: request failed: %w", err)
-	}
-	defer resp.Body.Close()
+	data, err := helpers.HTTPCall(ctx, http.MethodPost, url, bytes.NewReader(body))
 
-	var envelope struct {
-		Message string `json:"message"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&envelope); err != nil {
-		return "", fmt.Errorf("uam: decode response: %w", err)
-	}
-	if resp.StatusCode == http.StatusUnauthorized {
-		msg := envelope.Message
+	var httpErr *helpers.HTTPError
+	if errors.As(err, &httpErr) && httpErr.Status == http.StatusUnauthorized {
+		msg := httpErr.Message
 		if msg == "" {
 			msg = "Invalid or expired reset token"
 		}
 		return "", &helpers.CustomError{Status: http.StatusUnauthorized, Message: msg}
 	}
-	if resp.StatusCode >= 300 {
-		return "", fmt.Errorf("uam: unexpected status %d", resp.StatusCode)
+	if err != nil {
+		return "", fmt.Errorf("uam: %w", err)
 	}
 
+	var envelope struct {
+		Message string `json:"message"`
+	}
+	if err := json.Unmarshal(data, &envelope); err != nil {
+		return "", fmt.Errorf("uam: decode response: %w", err)
+	}
 	return envelope.Message, nil
 }
 
@@ -241,31 +234,27 @@ func (s *Services) verifyCredentialsWithUAM(ctx context.Context, email, password
 	}
 
 	url := helpers.UamBaseURL() + "/auth/verify"
-	resp, err := helpers.HTTPCall(ctx, http.MethodPost, url, bytes.NewReader(body))
-	if err != nil {
-		return nil, fmt.Errorf("uam: request failed: %w", err)
-	}
-	defer resp.Body.Close()
+	data, err := helpers.HTTPCall(ctx, http.MethodPost, url, bytes.NewReader(body))
 
-	var envelope struct {
-		Message string            `json:"message"`
-		Data    dtos.UamAccessDTO `json:"data"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&envelope); err != nil {
-		return nil, fmt.Errorf("uam: decode response: %w", err)
-	}
-
-	if resp.StatusCode == http.StatusUnauthorized {
-		msg := envelope.Message
+	var httpErr *helpers.HTTPError
+	if errors.As(err, &httpErr) && httpErr.Status == http.StatusUnauthorized {
+		msg := httpErr.Message
 		if msg == "" {
 			msg = "Invalid email or password"
 		}
 		return nil, &helpers.CustomError{Status: http.StatusUnauthorized, Message: msg}
 	}
-	if resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("uam: unexpected status %d", resp.StatusCode)
+	if err != nil {
+		return nil, fmt.Errorf("uam: %w", err)
 	}
 
+	var envelope struct {
+		Message string            `json:"message"`
+		Data    dtos.UamAccessDTO `json:"data"`
+	}
+	if err := json.Unmarshal(data, &envelope); err != nil {
+		return nil, fmt.Errorf("uam: decode response: %w", err)
+	}
 	return &envelope.Data, nil
 }
 

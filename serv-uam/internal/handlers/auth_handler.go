@@ -48,8 +48,8 @@ func (h *Handlers) UserGetAccess(c *gin.Context) {
 }
 
 // RequestPasswordReset generates a reset token for an email. The response never
-// carries the token itself — it only ever reaches the account owner via email (once the
-// notification-service call in AuthRequestPasswordReset is wired up), never the API caller.
+// carries the token itself — it only ever reaches the account owner via email
+// (see AuthRequestPasswordReset), never the API caller.
 func (h *Handlers) RequestPasswordReset(c *gin.Context) {
 	var req dtos.RequestPasswordResetRequest
 	if err := c.BindJSON(&req); err != nil {

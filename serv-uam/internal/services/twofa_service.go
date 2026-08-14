@@ -131,14 +131,8 @@ func (s *Services) sendTwoFAEmail(ctx context.Context, email, code string) error
 	}
 
 	url := helpers.MessageBaseURL() + "/emails/template"
-	resp, err := helpers.HTTPCall(ctx, http.MethodPost, url, bytes.NewReader(body))
-	if err != nil {
-		return fmt.Errorf("message: request failed: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode >= 300 {
-		return fmt.Errorf("message: unexpected status %d", resp.StatusCode)
+	if _, err := helpers.HTTPCall(ctx, http.MethodPost, url, bytes.NewReader(body)); err != nil {
+		return fmt.Errorf("message: %w", err)
 	}
 	return nil
 }

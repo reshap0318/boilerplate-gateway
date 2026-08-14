@@ -58,20 +58,15 @@ func (a *Access) getUserAccess(ctx context.Context, userID uint) (*userAccessDat
 // fetchUserAccess calls serv-uam's GET /users/:id/access.
 func (a *Access) fetchUserAccess(ctx context.Context, userID uint) (*userAccessData, error) {
 	url := UamBaseURL() + "/users/" + strconv.FormatUint(uint64(userID), 10) + "/access"
-	resp, err := HTTPCall(ctx, http.MethodGet, url, nil)
+	data, err := HTTPCall(ctx, http.MethodGet, url, nil)
 	if err != nil {
-		return nil, fmt.Errorf("uam: request failed: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("uam: unexpected status %d", resp.StatusCode)
+		return nil, fmt.Errorf("uam: %w", err)
 	}
 
 	var envelope struct {
 		Data userAccessData `json:"data"`
 	}
-	if err := json.NewDecoder(resp.Body).Decode(&envelope); err != nil {
+	if err := json.Unmarshal(data, &envelope); err != nil {
 		return nil, fmt.Errorf("uam: decode response: %w", err)
 	}
 

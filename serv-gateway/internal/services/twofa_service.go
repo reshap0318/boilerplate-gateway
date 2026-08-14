@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -19,14 +20,8 @@ func (s *Services) TwoFASend(ctx context.Context, email string) error {
 	}
 
 	url := helpers.UamBaseURL() + "/auth/2fa/send"
-	resp, err := helpers.HTTPCall(ctx, http.MethodPost, url, bytes.NewReader(body))
-	if err != nil {
-		return fmt.Errorf("uam: request failed: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode >= 300 {
-		return fmt.Errorf("uam: unexpected status %d", resp.StatusCode)
+	if _, err := helpers.HTTPCall(ctx, http.MethodPost, url, bytes.NewReader(body)); err != nil {
+		return fmt.Errorf("uam: %w", err)
 	}
 	return nil
 }
@@ -59,30 +54,26 @@ func (s *Services) verifyCodeWithUAM(ctx context.Context, email, code string) (*
 	}
 
 	url := helpers.UamBaseURL() + "/auth/2fa/verify"
-	resp, err := helpers.HTTPCall(ctx, http.MethodPost, url, bytes.NewReader(body))
-	if err != nil {
-		return nil, fmt.Errorf("uam: request failed: %w", err)
+	data, err := helpers.HTTPCall(ctx, http.MethodPost, url, bytes.NewReader(body))
+
+	var httpErr *helpers.HTTPError
+	if errors.As(err, &httpErr) && (httpErr.Status == http.StatusUnauthorized || httpErr.Status == http.StatusTooManyRequests) {
+		msg := httpErr.Message
+		if msg == "" {
+			msg = "Invalid or expired code"
+		}
+		return nil, &helpers.CustomError{Status: httpErr.Status, Message: msg}
 	}
-	defer resp.Body.Close()
+	if err != nil {
+		return nil, fmt.Errorf("uam: %w", err)
+	}
 
 	var envelope struct {
 		Message string            `json:"message"`
 		Data    dtos.UamAccessDTO `json:"data"`
 	}
-	if err := json.NewDecoder(resp.Body).Decode(&envelope); err != nil {
+	if err := json.Unmarshal(data, &envelope); err != nil {
 		return nil, fmt.Errorf("uam: decode response: %w", err)
 	}
-
-	if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusTooManyRequests {
-		msg := envelope.Message
-		if msg == "" {
-			msg = "Invalid or expired code"
-		}
-		return nil, &helpers.CustomError{Status: resp.StatusCode, Message: msg}
-	}
-	if resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("uam: unexpected status %d", resp.StatusCode)
-	}
-
 	return &envelope.Data, nil
 }

@@ -1,7 +1,10 @@
 package services
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -75,8 +78,6 @@ const passwordResetTTL = 1 * time.Hour
 // the token's hash. Returns nothing to the caller beyond success/failure — the token must only
 // ever reach the account owner via email, never in an API response (that would let anyone
 // reset anyone else's password without ever touching their inbox).
-// TODO: call the notification-service here to actually email the reset link once it exists —
-// until then the token is generated and cached but never delivered anywhere.
 func (s *Services) AuthRequestPasswordReset(ctx context.Context, email string) error {
 	s.Logger.LogCtx(ctx, "AuthRequestPasswordReset", "Reset requested for: %s", email)
 
@@ -100,7 +101,32 @@ func (s *Services) AuthRequestPasswordReset(ctx context.Context, email string) e
 		return err
 	}
 
+	if err := s.sendResetPasswordEmail(ctx, user.Email, token); err != nil {
+		s.Logger.LogCtx(ctx, "AuthRequestPasswordReset", "Failed to send reset email: %v", err)
+		return err
+	}
+
 	s.Logger.LogCtx(ctx, "AuthRequestPasswordReset", "Reset token generated for: %s", email)
+	return nil
+}
+
+// sendResetPasswordEmail dispatches the reset link via serv-message's template endpoint.
+func (s *Services) sendResetPasswordEmail(ctx context.Context, email, token string) error {
+	resetURL := helpers.FEBaseURL() + "/reset-password?token=" + token
+
+	body, err := json.Marshal(map[string]interface{}{
+		"to":       []string{email},
+		"template": "reset_password",
+		"params":   map[string]string{"token": token, "reset_url": resetURL},
+	})
+	if err != nil {
+		return err
+	}
+
+	url := helpers.MessageBaseURL() + "/emails/template"
+	if _, err := helpers.HTTPCall(ctx, http.MethodPost, url, bytes.NewReader(body)); err != nil {
+		return fmt.Errorf("message: %w", err)
+	}
 	return nil
 }
 

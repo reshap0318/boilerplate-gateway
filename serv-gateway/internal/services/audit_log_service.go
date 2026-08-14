@@ -28,13 +28,7 @@ func (s *Services) recordAuditLog(ctx context.Context, action, entityType string
 	}
 
 	url := helpers.UamBaseURL() + "/audit-logs"
-	resp, err := helpers.HTTPCall(ctx, http.MethodPost, url, bytes.NewReader(body))
-	if err != nil {
+	if _, err := helpers.HTTPCall(ctx, http.MethodPost, url, bytes.NewReader(body)); err != nil {
 		s.Logger.LogWarn(ctx, "recordAuditLog", "Request failed: %v", err)
-		return
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode >= 300 {
-		s.Logger.LogWarn(ctx, "recordAuditLog", "Unexpected status %d", resp.StatusCode)
 	}
 }

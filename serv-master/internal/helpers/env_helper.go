@@ -22,13 +22,3 @@ func GetEnvInt(key string, defaultValue int) int {
 	}
 	return defaultValue
 }
-
-// MessageBaseURL is where serv-message is reachable.
-func MessageBaseURL() string {
-	return GetEnv("SVC_MESSAGE_URL", "http://message:8080")
-}
-
-// FEBaseURL is the frontend's base URL, used to build links (e.g. reset-password) sent by email.
-func FEBaseURL() string {
-	return GetEnv("APP_FE_URL", "http://localhost:3000")
-}

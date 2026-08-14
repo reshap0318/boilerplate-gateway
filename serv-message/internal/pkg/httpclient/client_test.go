@@ -23,11 +23,9 @@ func TestCallForwardsHeaders(t *testing.T) {
 	ctx = context.WithValue(ctx, helpers.KeyEmail, "user@example.com")
 	ctx = context.WithValue(ctx, helpers.KeyRoles, []string{"admin", "viewer"})
 
-	resp, err := Call(ctx, http.MethodGet, srv.URL, nil)
-	if err != nil {
+	if _, err := Call(ctx, http.MethodGet, srv.URL, nil); err != nil {
 		t.Fatalf("Call failed: %v", err)
 	}
-	defer resp.Body.Close()
 
 	cases := map[string]string{
 		helpers.TraceIDHeader:   "trace-123",

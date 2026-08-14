@@ -1,8 +1,8 @@
-// Package httpclient provides a shared HTTP client for calling other
+// Package helpers - HTTPCall is a shared HTTP client for calling other
 // internal services, forwarding the caller's identity/trace headers so the
 // downstream service sees the same trusted context the api-gateway set on
 // this request.
-package httpclient
+package helpers
 
 import (
 	"context"
@@ -13,15 +13,13 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/reshap0318/serv-message/internal/helpers"
 )
 
-// Client is the shared client used for all service-to-service calls.
-var Client = &http.Client{Timeout: 10 * time.Second}
+// httpClient is the shared client used for all service-to-service calls.
+var httpClient = &http.Client{Timeout: 10 * time.Second}
 
-// HTTPError wraps a non-2xx response from Call. Body/Message carry the callee's payload so
-// callers that need to branch on status or read its error message can, without Call's own
+// HTTPError wraps a non-2xx response from HTTPCall. Body/Message carry the callee's payload so
+// callers that need to branch on status or read its error message can, without HTTPCall's own
 // []byte return value having to stay non-nil on error. Message is a best-effort pre-parse of
 // the callee's `{"message": "..."}` envelope (every service in this system responds with that
 // shape), empty if the body wasn't JSON or had no such field.
@@ -38,7 +36,7 @@ func (e *HTTPError) Error() string {
 	return fmt.Sprintf("unexpected status %d: %s", e.Status, e.Body)
 }
 
-// Call builds and sends a request to another internal service, copying the
+// HTTPCall builds and sends a request to another internal service, copying the
 // X-Trace-Id / X-User-* headers from ctx (as set by middleware.TraceID and
 // middleware.GatewayAuth) so the call chain stays correlated and the callee
 // trusts the same caller identity. The response body is closed internally and,
@@ -46,14 +44,14 @@ func (e *HTTPError) Error() string {
 // if you need structured data. On a non-2xx status the bytes are nil and the
 // error is an *HTTPError instead, which still carries the callee's response
 // body (and pre-parsed Message) so nothing is lost.
-func Call(ctx context.Context, method, url string, body io.Reader) ([]byte, error) {
+func HTTPCall(ctx context.Context, method, url string, body io.Reader) ([]byte, error) {
 	req, err := http.NewRequestWithContext(ctx, method, url, body)
 	if err != nil {
 		return nil, err
 	}
 	forwardHeaders(req, ctx)
 
-	resp, err := Client.Do(req)
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -79,22 +77,22 @@ func Call(ctx context.Context, method, url string, body io.Reader) ([]byte, erro
 }
 
 func forwardHeaders(req *http.Request, ctx context.Context) {
-	if traceID := helpers.GetTraceID(ctx); traceID != "" {
-		req.Header.Set(helpers.TraceIDHeader, traceID)
+	if traceID := GetTraceID(ctx); traceID != "" {
+		req.Header.Set(TraceIDHeader, traceID)
 	}
-	if uid := helpers.GetCallerID(ctx); uid != 0 {
-		req.Header.Set(helpers.HeaderUserID, strconv.FormatUint(uint64(uid), 10))
+	if uid := GetCallerID(ctx); uid != 0 {
+		req.Header.Set(HeaderUserID, strconv.FormatUint(uint64(uid), 10))
 	}
-	if email := helpers.GetCallerEmail(ctx); email != "" {
-		req.Header.Set(helpers.HeaderUserEmail, email)
+	if email := GetCallerEmail(ctx); email != "" {
+		req.Header.Set(HeaderUserEmail, email)
 	}
-	if name := helpers.GetCallerName(ctx); name != "" {
-		req.Header.Set(helpers.HeaderUserName, name)
+	if name := GetCallerName(ctx); name != "" {
+		req.Header.Set(HeaderUserName, name)
 	}
-	if roles := helpers.GetCallerRoles(ctx); len(roles) > 0 {
-		req.Header.Set(helpers.HeaderUserRoles, strings.Join(roles, ","))
+	if roles := GetCallerRoles(ctx); len(roles) > 0 {
+		req.Header.Set(HeaderUserRoles, strings.Join(roles, ","))
 	}
-	if perms := helpers.GetCallerPermissions(ctx); len(perms) > 0 {
-		req.Header.Set(helpers.HeaderUserPermissions, strings.Join(perms, ","))
+	if perms := GetCallerPermissions(ctx); len(perms) > 0 {
+		req.Header.Set(HeaderUserPermissions, strings.Join(perms, ","))
 	}
 }
